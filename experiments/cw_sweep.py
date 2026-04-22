@@ -21,7 +21,7 @@ AWG_DEVICE = 'DEV12120'
 AWG_CHANNEL = 0
 
 TT_CLICK_CHANNEL = 0
-TT_MARKER_CHANNEL = 0
+TT_MARKER_CHANNEL = 1
 
 # Parameters
 pulse_length = 3000     # Pulse duration (ps)
@@ -34,7 +34,6 @@ n_meas       = 1        # Number of measurements at each frequency
 
 center_freq = 2.87e9
 relative_start_freq = start_freq - center_freq
-relative_stop_freq = stop_freq - center_freq
 
 freq = np.linspace(start_freq, stop_freq, n_sweep)
 freq_incr = (stop_freq - start_freq) / (n_sweep - 1)
@@ -60,7 +59,7 @@ tt = createTimeTagger()
 tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
-cmb = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, n_sweep * n_meas)
+cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, n_sweep * n_meas)
 
 # Load AWG sequence
 sequence = load_sequence("../awg_sequences/cw_sweep.c")
@@ -68,7 +67,7 @@ sequence.constants = {
     'PULSE_LENGTH': pulse_length,
     'MEAS_DELAY': meas_delay,
     'OSC': osc,
-    'START_FREQ': start_freq,
+    'START_FREQ': relative_start_freq,
     'FREQ_INCR': freq_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
@@ -78,7 +77,7 @@ awg_channel.awg.load_sequencer_program(sequence)
 awg_channel.awg.wait_done()
 
 # Start time tagger and AWG sequence
-cmb.start()
+cbm.start()
 tt.sync()
 
 awg_channel.awg.enable_sequencer(single=True)

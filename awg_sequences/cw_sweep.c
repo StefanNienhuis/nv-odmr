@@ -14,8 +14,8 @@
 
 wave w = sine(PULSE_LENGTH);
 
-wave m1 = marker(MEAS_OFFSET, 0);
-wave m2 = marker(PULSE_LENGTH - MEAS_OFFSET, 1);
+wave m1 = marker(MEAS_DELAY, 0);
+wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
 wave m = join(m1, m2);
 
 wave wm = w + m;
