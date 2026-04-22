@@ -8,10 +8,9 @@ import time
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-from zhinst.toolkit import Session, Sequence
+from zhinst.toolkit import Session
 from TimeTagger import createTimeTagger, CountBetweenMarkers
-
-from experiments.load_sequence import load_sequence
+from util.load_sequence import load_sequence
 
 start_date = datetime.now()
 
