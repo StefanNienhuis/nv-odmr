@@ -2,6 +2,8 @@
  * Performs a CW ODMR frequency sweep.
  * Includes marker that stays high during the second half of the pulse, to allow system to stabilize.
  *
+ * In general multiple measurements per frequency (through N_MEAS) should not be needed. One longer pulse is preferred.
+ *
  * Required constants on Sequence property constants:
  *  - PULSE_LENGTH  - number of samples to output the pulse for
  *  - MEAS_DELAY    - number of delay samples before measurement marker is set high
@@ -12,7 +14,7 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave w = sine(PULSE_LENGTH);
+wave w = sine(PULSE_LENGTH, 1, 0, 1);
 
 wave m1 = marker(MEAS_DELAY, 0);
 wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
