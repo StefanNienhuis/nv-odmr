@@ -3,6 +3,7 @@
 #  - AWG channel number and power
 #  - Time tagger channel numbers, trigger level
 #  - Appropriate pulse length
+#  - Appropriate measurement count
 
 import time
 from datetime import datetime
@@ -30,7 +31,7 @@ osc          = 0        # Oscillator being swept
 start_freq   = 2.84e9   # Sweep start frequency (Hz)
 stop_freq    = 2.90e9   # Sweep stop frequency (Hz)
 n_sweep      = 401      # Number of sweep steps
-n_meas       = 1        # Number of measurements at each frequency
+n_meas       = 500      # Number of measurements at each frequency
 
 center_freq = 2.87e9
 relative_start_freq = start_freq - center_freq
@@ -59,10 +60,11 @@ tt = createTimeTagger()
 tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
-cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, n_sweep * n_meas)
+# Twice the number of samples since we get one with pulse and one without pulse (square AM modulation)
+cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, 2 * n_sweep * n_meas)
 
 # Load AWG sequence
-sequence = load_sequence("../awg_sequences/cw_sweep.c")
+sequence = load_sequence("../awg_sequences/cw_am_sweep.c")
 sequence.constants = {
     'PULSE_LENGTH': pulse_length,
     'MEAS_DELAY': meas_delay,
@@ -88,11 +90,14 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-counts = counts.reshape((n_sweep, n_meas))
-np.save(f'../data/cw_sweep/{start_date.isoformat()}.npy', counts)
+counts = counts.reshape((n_sweep, n_meas, 2))
+np.save(f'../data/cw_am_sweep/{start_date.isoformat()}.npy', counts)
 
-mean_counts = counts.mean(axis=1)
-mean_counts_norm = mean_counts / np.max(mean_counts)
+active_counts = counts[:,:,0]
+inactive_counts = counts[:,:,1]
 
-plt.plot(freq, mean_counts_norm)
+am_counts = (inactive_counts - active_counts) / inactive_counts
+mean_am_counts = am_counts.mean(axis=1)
+
+plt.plot(freq, mean_am_counts)
 plt.show()
