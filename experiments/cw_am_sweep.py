@@ -63,6 +63,14 @@ awg_channel.configure_channel(
     rf_path=True
 )
 
+awg_channel.configure_sine_generation(
+    enable=True,
+    osc_index=osc,
+    osc_frequency=relative_start_freq,
+    gains=(0.0, 1.0, 1.0, 0.0),
+    phase=0
+)
+
 # Time Tagger initialization
 tt = createTimeTagger()
 

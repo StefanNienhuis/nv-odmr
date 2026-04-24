@@ -14,7 +14,7 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave w = sine(PULSE_LENGTH, 1, 0, 1);
+wave w = ones(PULSE_LENGTH);
 
 wave m1 = marker(MEAS_DELAY, 0);
 wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);

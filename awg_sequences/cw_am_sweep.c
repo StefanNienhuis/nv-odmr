@@ -18,15 +18,15 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave s = sine(PULSE_LENGTH, 1, 0, 1);
-wave z = zeros(PULSE_LENGTH);
+wave w1 = ones(PULSE_LENGTH);
+wave w2 = zeros(PULSE_LENGTH);
 
 wave m1 = marker(MEAS_DELAY, 0);
 wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
 wave m = join(m1, m2);
 
-wave sm = s + m;
-wave zm = z + m;
+wave wm1 = w1 + m;
+wave wm2 = w2 + m;
 
 assignWaveIndex(0, sm);
 assignWaveIndex(1, zm);
