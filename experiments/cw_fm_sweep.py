@@ -24,11 +24,13 @@ TT_CLICK_CHANNEL = 0
 TT_MARKER_CHANNEL = 1
 
 # Parameters
-modulation_freq = 5e3      # AM modulation frequency (Hz)
+modulation_freq = 5e3      # FM modulation frequency
 meas_delay_ns   = 1e3      # Delay before measuring (ns)
-osc             = 0        # Oscillator being swept
+osc1            = 0        # First oscillator being swept
+osc2            = 1        # Second oscillator being swept
 start_freq      = 2.84e9   # Sweep start frequency (Hz)
 stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
+freq_dev        = 1e6      # Frequency deviation (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 50       # Number of measurements at each frequency
 
@@ -63,8 +65,16 @@ awg_channel.configure_channel(
 
 awg_channel.configure_sine_generation(
     enable=True,
-    osc_index=osc,
-    osc_frequency=relative_start_freq,
+    osc_index=osc1,
+    osc_frequency=relative_start_freq - freq_dev,
+    gains=(0.0, 1.0, 1.0, 0.0),
+    phase=0
+)
+
+awg_channel.configure_sine_generation(
+    enable=True,
+    osc_index=osc2,
+    osc_frequency=relative_start_freq + freq_dev,
     gains=(0.0, 1.0, 1.0, 0.0),
     phase=0
 )
@@ -75,16 +85,18 @@ tt = createTimeTagger()
 tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
-# Twice the number of samples since we get one with pulse and one without pulse (square AM modulation)
+# Twice the number of samples since we get two pulses at different frequencies (square FM modulation)
 cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, 2 * n_sweep * n_meas)
 
 # Load AWG sequence
-sequence = load_sequence("../awg_sequences/cw_am_sweep.c")
+sequence = load_sequence("../awg_sequences/cw_fm_sweep.c")
 sequence.constants = {
     'PULSE_LENGTH': pulse_length,
     'MEAS_DELAY': meas_delay,
-    'OSC': osc,
+    'OSC1': osc1,
+    'OSC2': osc2,
     'START_FREQ': relative_start_freq,
+    'FREQ_DEV': freq_dev,
     'FREQ_INCR': freq_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
@@ -101,9 +113,11 @@ ct = CommandTable(ct_schema)
 
 # Entry 0: play waveform 0
 ct.table[0].waveform.index = 0
+ct.table[0].oscillatorSelect.value = osc1
 
 # Entry 1: play waveform 1
 ct.table[1].waveform.index = 1
+ct.table[1].oscillatorSelect.value = osc2
 
 awg_channel.awg.commandtable.upload_to_device(ct)
 
@@ -120,15 +134,15 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.save(f'../data/cw_am_sweep/{start_date.isoformat()}.npy', counts)
+np.save(f'../data/cw_fm_sweep/{start_date.isoformat()}.npy', counts)
 
-active_counts = counts[:,:,0]
-inactive_counts = counts[:,:,1]
+low_counts = counts[:,:,0]
+high_counts = counts[:,:,1]
 
-mean_active_counts = np.mean(active_counts, axis=1)
-mean_inactive_counts = np.mean(inactive_counts, axis=1)
+mean_low_counts = np.mean(low_counts, axis=1)
+mean_high_counts = np.mean(high_counts, axis=1)
 
-am_counts = (inactive_counts - active_counts) / inactive_counts
+fm_counts = (mean_high_counts - mean_low_counts) / (mean_high_counts + mean_low_counts)
 
-plt.plot(freq, am_counts)
+plt.plot(freq, fm_counts)
 plt.show()
