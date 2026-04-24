@@ -26,7 +26,7 @@ TT_CLICK_CHANNEL = 0
 TT_MARKER_CHANNEL = 1
 
 # Parameters
-modulation_freq = 5e3      # AM modulation frequency
+modulation_freq = 5e3      # AM modulation frequency (Hz)
 meas_delay_ns   = 1e3      # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
 start_freq      = 2.84e9   # Sweep start frequency (Hz)
@@ -36,7 +36,7 @@ n_meas          = 50       # Number of measurements at each frequency
 
 # Calculate pulse length from modulation frequency
 period_ns = 1e9/modulation_freq
-pulse_length_ns = (period_ns - meas_delay_ns * 2) / 2
+pulse_length_ns = period_ns/ 2
 
 # Convert ns -> samples
 pulse_length = int(pulse_length_ns * AWG_SAMPLE_RATE / 1e9)
