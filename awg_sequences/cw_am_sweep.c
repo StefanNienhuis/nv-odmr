@@ -28,6 +28,9 @@ wave m = join(m1, m2);
 wave sm = s + m;
 wave zm = z + m;
 
+assignWaveIndex(0, sm);
+assignWaveIndex(1, zm);
+
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
 var i;
@@ -37,8 +40,8 @@ for (i = 0; i < N_SWEEP; i++) {
     resetOscPhase();
 
     repeat (N_MEAS) {
-        playWave(1, sm);
-        playWave(1, zm);
+        executeTableEntry(0);
+        executeTableEntry(1);
     }
 
     // Wait until completion to not setSweepStep during waveform

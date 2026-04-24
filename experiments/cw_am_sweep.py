@@ -20,18 +20,27 @@ AWG_SERVER_HOST = 'localhost'
 AWG_SERVER_PORT = 8004
 AWG_DEVICE = 'DEV12120'
 AWG_CHANNEL = 0
+AWG_SAMPLE_RATE = 2e9
 
 TT_CLICK_CHANNEL = 0
 TT_MARKER_CHANNEL = 1
 
 # Parameters
-pulse_length = 3000     # Pulse duration (ps)
-meas_delay   = 1500     # Delay before measuring (ps)
-osc          = 0        # Oscillator being swept
-start_freq   = 2.84e9   # Sweep start frequency (Hz)
-stop_freq    = 2.90e9   # Sweep stop frequency (Hz)
-n_sweep      = 401      # Number of sweep steps
-n_meas       = 500      # Number of measurements at each frequency
+modulation_freq = 5e3      # AM modulation frequency
+meas_delay_ns   = 1e3      # Delay before measuring (ns)
+osc             = 0        # Oscillator being swept
+start_freq      = 2.84e9   # Sweep start frequency (Hz)
+stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
+n_sweep         = 401      # Number of sweep steps
+n_meas          = 50       # Number of measurements at each frequency
+
+# Calculate pulse length from modulation frequency
+period_ns = 1e9/modulation_freq
+pulse_length_ns = (period_ns - meas_delay_ns * 2) / 2
+
+# Convert ns -> samples
+pulse_length = int(pulse_length_ns * AWG_SAMPLE_RATE / 1e9)
+meas_delay = int(meas_delay_ns * AWG_SAMPLE_RATE / 1e9)
 
 center_freq = 2.87e9
 relative_start_freq = start_freq - center_freq
