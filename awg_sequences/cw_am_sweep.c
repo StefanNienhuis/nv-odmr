@@ -28,8 +28,8 @@ wave m = join(m1, m2);
 wave wm1 = w1 + m;
 wave wm2 = w2 + m;
 
-assignWaveIndex(0, sm);
-assignWaveIndex(1, zm);
+assignWaveIndex(0, wm1);
+assignWaveIndex(1, wm2);
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
