@@ -90,6 +90,8 @@ ct = CommandTable(ct_schema)
 # Entry 0: play waveform 0
 ct.table[0].waveform.index = 0
 
+awg_channel.awg.commandtable.upload_to_device(ct)
+
 # Start time tagger and AWG sequence
 cbm.start()
 tt.sync()

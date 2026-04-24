@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-from zhinst.toolkit import Session
+from zhinst.toolkit import Session, CommandTable
 from TimeTagger import createTimeTagger, CountBetweenMarkers
 from util.load_sequence import load_sequence
 
@@ -86,6 +86,20 @@ sequence.constants = {
 
 awg_channel.awg.load_sequencer_program(sequence)
 awg_channel.awg.wait_done()
+
+# Load command table
+# Command table used since it's more efficient than playWave
+# https://docs.zhinst.com/shfsg_user_manual/tutorials/tutorial_command_table.html#introduction-to-the-command-table
+ct_schema = awg_channel.awg.commandtable.load_validation_schema()
+ct = CommandTable(ct_schema)
+
+# Entry 0: play waveform 0
+ct.table[0].waveform.index = 0
+
+# Entry 1: play waveform 1
+ct.table[1].waveform.index = 1
+
+awg_channel.awg.commandtable.upload_to_device(ct)
 
 # Start time tagger and AWG sequence
 cbm.start()
