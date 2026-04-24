@@ -127,8 +127,10 @@ np.save(f'../data/cw_am_sweep/{start_date.isoformat()}.npy', counts)
 active_counts = counts[:,:,0]
 inactive_counts = counts[:,:,1]
 
-am_counts = (inactive_counts - active_counts) / inactive_counts
-mean_am_counts = am_counts.mean(axis=1)
+mean_active_counts = np.mean(active_counts, axis=1)
+mean_inactive_counts = np.mean(inactive_counts, axis=1)
 
-plt.plot(freq, mean_am_counts)
+am_counts = (inactive_counts - active_counts) / inactive_counts
+
+plt.plot(freq, am_counts)
 plt.show()
