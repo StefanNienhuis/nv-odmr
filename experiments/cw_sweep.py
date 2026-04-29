@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
-from TimeTagger import createTimeTagger, CountBetweenMarkers
+from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -17,22 +17,22 @@ start_date = datetime.now()
 AWG_SERVER_HOST = 'localhost'
 AWG_SERVER_PORT = 8004
 AWG_DEVICE = 'DEV12120'
-AWG_CHANNEL = 0
+AWG_CHANNEL = 2
 AWG_SAMPLE_RATE = 2e9
 
-TT_CLICK_CHANNEL = 0
-TT_MARKER_CHANNEL = 1
+TT_CLICK_CHANNEL = 1
+TT_MARKER_CHANNEL = 2
 
 # Parameters
-pulse_length_ns = 1e6      # Pulse duration (ns)
+pulse_length_ns = 50e6      # Pulse duration (ns)
 meas_delay_ns   = 1e3      # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
-start_freq      = 2.84e9   # Sweep start frequency (Hz)
-stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
+start_freq      = 2.82e9   # Sweep start frequency (Hz)
+stop_freq       = 2.92e9   # Sweep stop frequency (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 1        # Number of measurements at each frequency
 
-expected_duration = n_sweep * n_meas * pulse_length_ns / 1e6
+expected_duration = n_sweep * n_meas * pulse_length_ns / 1e9
 print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
@@ -44,7 +44,7 @@ meas_delay = meas_delay_ns * AWG_SAMPLE_RATE / 1e9
 pulse_length = int(round(pulse_length / 16) * 16)
 meas_delay = int(round(meas_delay / 16) * 16)
 
-center_freq = 2.87e9
+center_freq = 2.8e9
 relative_start_freq = start_freq - center_freq
 
 freq = np.linspace(start_freq, stop_freq, n_sweep)
@@ -73,8 +73,14 @@ awg_channel.configure_sine_generation(
     phase=0
 )
 
+awg_channel.awg.configure_marker_and_trigger(
+    trigger_in_source='trigin0',
+    trigger_in_slope='rising_edge',
+    marker_out_source='output0_marker0'
+)
+
 # Time Tagger initialization
-tt = createTimeTagger()
+tt = createTimeTaggerNetwork('localhost:41101')
 
 tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
@@ -111,12 +117,15 @@ awg_channel.awg.commandtable.upload_to_device(ct)
 cbm.start()
 tt.sync()
 
+print('A')
 awg_channel.awg.enable_sequencer(single=True)
 awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 
+print('B')
 while not cbm.ready():
     time.sleep(0.2)
 
+print('C')
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas))

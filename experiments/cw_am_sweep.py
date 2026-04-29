@@ -17,11 +17,11 @@ start_date = datetime.now()
 AWG_SERVER_HOST = 'localhost'
 AWG_SERVER_PORT = 8004
 AWG_DEVICE = 'DEV12120'
-AWG_CHANNEL = 0
+AWG_CHANNEL = 2
 AWG_SAMPLE_RATE = 2e9
 
-TT_CLICK_CHANNEL = 0
-TT_MARKER_CHANNEL = 1
+TT_CLICK_CHANNEL = 1
+TT_MARKER_CHANNEL = 2
 
 # Parameters
 modulation_freq = 5e3      # AM modulation frequency (Hz)
