@@ -4,7 +4,7 @@
 #  - Time tagger channel numbers, trigger level
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
@@ -35,6 +35,10 @@ n_meas          = 50       # Number of measurements at each frequency
 # Calculate pulse length from modulation frequency
 period_ns = 1e9 / modulation_freq
 pulse_length_ns = period_ns / 2
+
+expected_duration = n_sweep * n_meas * period_ns / 1e6
+print(f"Expected duration: {expected_duration}s")
+print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
 # Convert ns -> samples
 pulse_length = pulse_length_ns * AWG_SAMPLE_RATE / 1e9
@@ -122,7 +126,7 @@ cbm.start()
 tt.sync()
 
 awg_channel.awg.enable_sequencer(single=True)
-awg_channel.awg.wait_done()
+awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 
 while not cbm.ready():
     time.sleep(0.2)
