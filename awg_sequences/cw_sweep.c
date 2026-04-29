@@ -1,12 +1,12 @@
 /*
  * Performs a CW ODMR frequency sweep.
- * Includes marker that stays high during the second half of the pulse, to allow system to stabilize.
+ * Includes marker that stays low for MEAS_DELAY samples, to allow system to stabilize.
  *
- * In general multiple measurements per frequency (through N_MEAS) should not be needed. One longer pulse is preferred.
+ * Marker is only toggled in the first measurement (of N_MEAS), staying high afterwards since the pulse doesn't change.
  *
  * Required constants on Sequence property constants:
- *  - PULSE_LENGTH  - number of samples to output the pulse for
- *  - MEAS_DELAY    - number of delay samples before measurement marker is set high
+ *  - PULSE_LENGTH  - number of samples to output the pulse for - must be less than 49 kSa and a multiple of 16
+ *  - MEAS_DELAY    - number of delay samples before marker is set high - must be less than PULSE_LENGTH and a multiple of 16
  *  - OSC           - oscillator to sweep
  *  - START_FREQ    - starting frequency relative to center
  *  - FREQ_INCR     - sweep frequency increment amount
@@ -14,15 +14,20 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave w = ones(PULSE_LENGTH);
+wave w1 = ones(MEAS_DELAY);
+wave m11 = marker(MEAS_DELAY, 0);
 
-wave m1 = marker(MEAS_DELAY, 0);
-wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
-wave m = join(m1, m2);
+wave w2 = ones(16);
+wave m2 = marker(16, 1);
 
-wave wm = w + m;
+wave wm1 = w1 + m1;
+wave wm2 = w2 + m2;
 
-assignWaveIndex(0, wm);
+assignWaveIndex(0, wm1);
+assignWaveIndex(1, wm2);
+
+// Sample count to hold after the meas delay, minus 16 as it's triggered with playHold from a previous.
+const PULSE_HOLD = PULSE_LENGTH - MEAS_DELAY - 16;
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
@@ -32,9 +37,9 @@ for (i = 0; i < N_SWEEP; i++) {
 
     resetOscPhase();
 
-    repeat (N_MEAS) {
-        executeTableEntry(0);
-    }
+    executeTableEntry(0);
+    executeTableEntry(1);
+    playHold(PULSE_HOLD);
 
     // Wait until completion to not setSweepStep during waveform
     waitWave();

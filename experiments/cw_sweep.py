@@ -33,8 +33,12 @@ n_sweep         = 401      # Number of sweep steps
 n_meas          = 1        # Number of measurements at each frequency
 
 # Convert ns -> samples
-pulse_length = int(pulse_length_ns * AWG_SAMPLE_RATE / 1e9)
-meas_delay = int(meas_delay_ns * AWG_SAMPLE_RATE / 1e9)
+pulse_length = pulse_length_ns * AWG_SAMPLE_RATE / 1e9
+meas_delay = meas_delay_ns * AWG_SAMPLE_RATE / 1e9
+
+# Round counts to 16 - AWG zero pads otherwise
+pulse_length = int(round(pulse_length / 16) * 16)
+meas_delay = int(round(meas_delay / 16) * 16)
 
 center_freq = 2.87e9
 relative_start_freq = start_freq - center_freq
