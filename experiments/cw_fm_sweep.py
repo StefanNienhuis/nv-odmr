@@ -39,8 +39,12 @@ period_ns = 1e9 / modulation_freq
 pulse_length_ns = period_ns / 2
 
 # Convert ns -> samples
-pulse_length = int(pulse_length_ns * AWG_SAMPLE_RATE / 1e9)
-meas_delay = int(meas_delay_ns * AWG_SAMPLE_RATE / 1e9)
+pulse_length = pulse_length_ns * AWG_SAMPLE_RATE / 1e9
+meas_delay = meas_delay_ns * AWG_SAMPLE_RATE / 1e9
+
+# Round counts to 16 - AWG zero pads otherwise
+pulse_length = int(round(pulse_length / 16) * 16)
+meas_delay = int(round(meas_delay / 16) * 16)
 
 center_freq = 2.87e9
 relative_start_freq = start_freq - center_freq
@@ -111,13 +115,21 @@ awg_channel.awg.wait_done()
 ct_schema = awg_channel.awg.commandtable.load_validation_schema()
 ct = CommandTable(ct_schema)
 
-# Entry 0: play waveform 0
+# Entry 0: play waveform 0, osc1
 ct.table[0].waveform.index = 0
 ct.table[0].oscillatorSelect.value = osc1
 
-# Entry 1: play waveform 1
+# Entry 1: play waveform 1, osc1
 ct.table[1].waveform.index = 1
-ct.table[1].oscillatorSelect.value = osc2
+ct.table[1].oscillatorSelect.value = osc1
+
+# Entry 2: play waveform 0, osc2
+ct.table[2].waveform.index = 0
+ct.table[2].oscillatorSelect.value = osc2
+
+# Entry 3: play waveform 1, osc2
+ct.table[3].waveform.index = 1
+ct.table[3].oscillatorSelect.value = osc2
 
 awg_channel.awg.commandtable.upload_to_device(ct)
 

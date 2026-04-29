@@ -18,20 +18,29 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave w1 = ones(PULSE_LENGTH);
-wave w2 = zeros(PULSE_LENGTH);
+wave wh1 = ones(MEAS_DELAY);
+wave wh2 = ones(16);
+
+wave wl1 = zeros(MEAS_DELAY);
+wave wl2 = zeros(16);
 
 wave m1 = marker(MEAS_DELAY, 0);
-wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
-wave m = join(m1, m2);
+wave m2 = marker(16, 1);
 
-wave wm1 = w1 + m;
-wave wm2 = w2 + m;
+wave wh1m = wh1 + m1;
+wave wh2m = wh2 + m2;
+wave wl1m = wl1 + m1;
+wave wl2m = wl2 + m2;
 
-assignWaveIndex(0, wm1);
-assignWaveIndex(1, wm2);
+assignWaveIndex(0, wh1m);
+assignWaveIndex(1, wh2m);
+assignWaveIndex(2, wl1m);
+assignWaveIndex(3, wl2m);
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
+
+// Sample count to hold after the meas delay, minus 16 as it's triggered with playHold from a previous.
+const PULSE_HOLD = PULSE_LENGTH - MEAS_DELAY - 16;
 
 var i;
 for (i = 0; i < N_SWEEP; i++) {
@@ -42,6 +51,11 @@ for (i = 0; i < N_SWEEP; i++) {
     repeat (N_MEAS) {
         executeTableEntry(0);
         executeTableEntry(1);
+        playHold(PULSE_HOLD);
+
+        executeTableEntry(2);
+        executeTableEntry(3);
+        playHold(PULSE_HOLD);
     }
 
     // Wait until completion to not setSweepStep during waveform

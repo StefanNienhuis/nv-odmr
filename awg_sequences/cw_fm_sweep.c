@@ -20,20 +20,23 @@
  *  - N_MEAS        - number of measurements to perform at each frequency
  */
 
-wave w = ones(PULSE_LENGTH);
-
+wave w1 = ones(MEAS_DELAY);
 wave m1 = marker(MEAS_DELAY, 0);
-wave m2 = marker(PULSE_LENGTH - MEAS_DELAY, 1);
-wave m = join(m1, m2);
 
-wave wm = w + m;
+wave w2 = ones(16);
+wave m2 = marker(16, 1);
 
-// Assign same wave to two indexes, oscillator selection done in Python
-assignWaveIndex(0, wm);
-assignWaveIndex(1, wm);
+wave wm1 = w1 + m1;
+wave wm2 = w2 + m2;
+
+assignWaveIndex(0, wm1);
+assignWaveIndex(1, wm2);
 
 configFreqSweep(OSC1, START_FREQ - FREQ_DEV, FREQ_INCR);
 configFreqSweep(OSC2, START_FREQ + FREQ_DEV, FREQ_INCR);
+
+// Sample count to hold after the meas delay, minus 16 as it's triggered with playHold from a previous.
+const PULSE_HOLD = PULSE_LENGTH - MEAS_DELAY - 16;
 
 var i;
 for (i = 0; i < N_SWEEP; i++) {
@@ -45,6 +48,11 @@ for (i = 0; i < N_SWEEP; i++) {
     repeat (N_MEAS) {
         executeTableEntry(0);
         executeTableEntry(1);
+        playHold(PULSE_HOLD);
+
+        executeTableEntry(2);
+        executeTableEntry(3);
+        playHold(PULSE_HOLD);
     }
 
     // Wait until completion to not setSweepStep during waveform
