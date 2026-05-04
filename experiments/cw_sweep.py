@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
-from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
+from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -24,13 +24,13 @@ TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 # Parameters
-pulse_length_ns = 50e6      # Pulse duration (ns)
-meas_delay_ns   = 1e3      # Delay before measuring (ns)
+pulse_length_ns = 100e6      # Pulse duration (ns)
+meas_delay_ns   = 50e3      # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
-start_freq      = 2.82e9   # Sweep start frequency (Hz)
-stop_freq       = 2.92e9   # Sweep stop frequency (Hz)
+start_freq      = 2.86e9   # Sweep start frequency (Hz)
+stop_freq       = 2.88e9   # Sweep stop frequency (Hz)
 n_sweep         = 401      # Number of sweep steps
-n_meas          = 1        # Number of measurements at each frequency
+n_meas          = 5        # Number of measurements at each frequency
 
 expected_duration = n_sweep * n_meas * pulse_length_ns / 1e9
 print(f"Expected duration: {expected_duration}s")
@@ -60,16 +60,15 @@ awg_channel = awg_device.sgchannels[AWG_CHANNEL]
 
 awg_channel.configure_channel(
     enable=True,
-    output_range=0,
+    output_range=10,
     center_frequency=center_freq,
     rf_path=True
 )
 
-awg_channel.configure_sine_generation(
+awg_channel.configure_pulse_modulation(
     enable=True,
     osc_index=osc,
     osc_frequency=relative_start_freq,
-    gains=(0.0, 1.0, 1.0, 0.0),
     phase=0
 )
 
@@ -82,10 +81,11 @@ awg_channel.awg.configure_marker_and_trigger(
 # Time Tagger initialization
 tt = createTimeTaggerNetwork('localhost:41101')
 
-tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
+tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.25)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
-cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, n_sweep * n_meas)
+# Marker channel is inverted
+cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, CHANNEL_UNUSED, n_sweep)
 
 # Load AWG sequence
 sequence = load_sequence("../awg_sequences/cw_sweep.c")
@@ -111,28 +111,33 @@ ct = CommandTable(ct_schema)
 # Entry 0: play waveform 0
 ct.table[0].waveform.index = 0
 
+# Entry 1: play waveform 1
+ct.table[1].waveform.index = 1
+
+# Entry 2: hold for remaining time
+ct.table[2].waveform.playHold = True
+ct.table[2].waveform.length = pulse_length - meas_delay - 16
+
 awg_channel.awg.commandtable.upload_to_device(ct)
 
 # Start time tagger and AWG sequence
 cbm.start()
 tt.sync()
 
-print('A')
 awg_channel.awg.enable_sequencer(single=True)
 awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 
-print('B')
 while not cbm.ready():
     time.sleep(0.2)
 
-print('C')
 counts = cbm.getData()
 counts = np.array(counts)
-counts = counts.reshape((n_sweep, n_meas))
 np.save(f'../data/cw_sweep/{start_date.isoformat()}.npy', counts)
 
-mean_counts = counts.mean(axis=1)
-mean_counts_norm = mean_counts / np.max(mean_counts)
+print(counts)
+print(cbm.getBinWidths())
 
-plt.plot(freq, mean_counts_norm)
+counts_norm = counts / np.max(counts)
+
+plt.plot(freq, counts_norm)
 plt.show()

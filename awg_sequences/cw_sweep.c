@@ -15,19 +15,14 @@
  */
 
 wave w1 = ones(MEAS_DELAY);
-wave m11 = marker(MEAS_DELAY, 0);
+wave m1 = marker(MEAS_DELAY, 1);
 
 wave w2 = ones(16);
-wave m2 = marker(16, 1);
 
 wave wm1 = w1 + m1;
-wave wm2 = w2 + m2;
 
-assignWaveIndex(0, wm1);
-assignWaveIndex(1, wm2);
-
-// Sample count to hold after the meas delay, minus 16 as it's triggered with playHold from a previous.
-const PULSE_HOLD = PULSE_LENGTH - MEAS_DELAY - 16;
+assignWaveIndex(wm1, 0);
+assignWaveIndex(w2, 1);
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
@@ -38,9 +33,15 @@ for (i = 0; i < N_SWEEP; i++) {
     resetOscPhase();
 
     executeTableEntry(0);
-    executeTableEntry(1);
-    playHold(PULSE_HOLD);
-
-    // Wait until completion to not setSweepStep during waveform
     waitWave();
+
+    repeat (N_MEAS) {
+        executeTableEntry(1);
+        waitWave();
+        executeTableEntry(2);
+        waitWave();
+    }
 }
+
+// Finish off with marker reset for TT
+executeTableEntry(0);
