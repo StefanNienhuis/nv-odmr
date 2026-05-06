@@ -7,7 +7,7 @@ stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
 
 freq = np.linspace(start_freq, stop_freq, n_sweep)
 
-counts = np.load('/home/dl-lab-pc3/QB2025/nv-odmr/persist/cw_fm_sweep/2026-05-06T12:51:18.508017.npy')
+counts = np.load('../persist/cw_fm_sweep/2026-05-06T12:51:18.508017.npy')
 
 low_counts = counts[:,:,0]
 high_counts = counts[:,:,1]
