@@ -17,12 +17,12 @@
 wave w1 = ones(MEAS_DELAY);
 wave m1 = marker(MEAS_DELAY, 1);
 
-wave w2 = ones(16);
+wave w2 = ones(1024);
 
 wave wm1 = w1 + m1;
 
-assignWaveIndex(wm1, 0);
-assignWaveIndex(w2, 1);
+assignWaveIndex(1, 2, wm1, 0);
+assignWaveIndex(1, 2, w2, 1);
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
@@ -37,7 +37,6 @@ for (i = 0; i < N_SWEEP; i++) {
 
     repeat (N_MEAS) {
         executeTableEntry(1);
-        waitWave();
         executeTableEntry(2);
         waitWave();
     }

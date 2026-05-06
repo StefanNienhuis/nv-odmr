@@ -21,16 +21,16 @@
  */
 
 wave w1 = ones(MEAS_DELAY);
-wave m1 = marker(MEAS_DELAY, 0);
+wave m1 = marker(MEAS_DELAY, 1);
 
-wave w2 = ones(16);
-wave m2 = marker(16, 1);
+wave w2 = ones(1024);
+wave m2 = marker(1024, 0);
 
 wave wm1 = w1 + m1;
 wave wm2 = w2 + m2;
 
-assignWaveIndex(0, wm1);
-assignWaveIndex(1, wm2);
+assignWaveIndex(1, 2, wm1, 0);
+assignWaveIndex(1, 2, wm2, 1);
 
 configFreqSweep(OSC1, START_FREQ - FREQ_DEV, FREQ_INCR);
 configFreqSweep(OSC2, START_FREQ + FREQ_DEV, FREQ_INCR);
@@ -47,14 +47,20 @@ for (i = 0; i < N_SWEEP; i++) {
 
     repeat (N_MEAS) {
         executeTableEntry(0);
+        waitWave();
         executeTableEntry(1);
-        playHold(PULSE_HOLD);
+        executeTableEntry(4);
+        waitWave();
 
         executeTableEntry(2);
         executeTableEntry(3);
-        playHold(PULSE_HOLD);
+        executeTableEntry(4);
+        waitWave();
     }
 
     // Wait until completion to not setSweepStep during waveform
     waitWave();
 }
+
+// Finish off with marker reset for TT
+executeTableEntry(0);

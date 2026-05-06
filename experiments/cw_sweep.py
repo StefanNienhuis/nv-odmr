@@ -27,8 +27,8 @@ TT_MARKER_CHANNEL = 2
 pulse_length_ns = 100e6      # Pulse duration (ns)
 meas_delay_ns   = 50e3      # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
-start_freq      = 2.86e9   # Sweep start frequency (Hz)
-stop_freq       = 2.88e9   # Sweep stop frequency (Hz)
+start_freq      = 2.84e9   # Sweep start frequency (Hz)
+stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 5        # Number of measurements at each frequency
 
@@ -65,6 +65,13 @@ awg_channel.configure_channel(
     rf_path=True
 )
 
+awg_channel.configure_sine_generation(
+    enable=False,
+    osc_index=osc,
+    osc_frequency=relative_start_freq,
+    phase=0
+)
+
 awg_channel.configure_pulse_modulation(
     enable=True,
     osc_index=osc,
@@ -85,7 +92,7 @@ tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.25)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
 # Marker channel is inverted
-cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, CHANNEL_UNUSED, n_sweep)
+cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, TT_MARKER_CHANNEL, n_sweep)
 
 # Load AWG sequence
 sequence = load_sequence("../awg_sequences/cw_sweep.c")
@@ -116,7 +123,7 @@ ct.table[1].waveform.index = 1
 
 # Entry 2: hold for remaining time
 ct.table[2].waveform.playHold = True
-ct.table[2].waveform.length = pulse_length - meas_delay - 16
+ct.table[2].waveform.length = pulse_length - meas_delay - 1024
 
 awg_channel.awg.commandtable.upload_to_device(ct)
 
