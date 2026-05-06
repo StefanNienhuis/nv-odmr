@@ -150,7 +150,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.save(f'../data/cw_am_sweep/{start_date.isoformat()}.npy', counts)
+np.save(f'../data/cw_am_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
 
 active_counts = counts[:,:,0]
 inactive_counts = counts[:,:,1]

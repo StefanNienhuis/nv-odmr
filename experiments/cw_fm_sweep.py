@@ -173,7 +173,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.save(f'../data/cw_fm_sweep/{start_date.isoformat()}.npy', counts)
+np.save(f'../data/cw_fm_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
 
 low_counts = counts[:,:,0]
 high_counts = counts[:,:,1]

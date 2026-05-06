@@ -139,7 +139,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.save(f'../data/cw_sweep/{start_date.isoformat()}.npy', counts)
+np.save(f'../data/cw_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
 
 print(counts)
 print(cbm.getBinWidths())
