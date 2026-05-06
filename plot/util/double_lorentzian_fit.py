@@ -30,4 +30,4 @@ def fit_curve(freqs, fluorescence, dip=True):
 
     params, _ = curve_fit(curve, freqs, fluorescence, p0=initial_guess)
 
-    return params
+    return curve, params
