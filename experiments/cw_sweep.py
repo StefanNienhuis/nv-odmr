@@ -32,6 +32,16 @@ stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 5        # Number of measurements at each frequency
 
+# Parameters stored in output file
+params = {
+    "pulse_length_ns": pulse_length_ns,
+    "meas_delay_ns": meas_delay_ns,
+    "start_freq": start_freq,
+    "stop_freq": stop_freq,
+    "n_sweep": n_sweep,
+    "n_meas": n_meas,
+}
+
 expected_duration = n_sweep * n_meas * pulse_length_ns / 1e9
 print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
@@ -139,7 +149,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.save(f'../data/cw_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
+np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
 
 print(counts)
 print(cbm.getBinWidths())

@@ -32,6 +32,16 @@ stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 5       # Number of measurements at each frequency
 
+# Parameters stored in output file
+params = {
+    "modulation_freq": modulation_freq,
+    "meas_delay_ns": meas_delay_ns,
+    "start_freq": start_freq,
+    "stop_freq": stop_freq,
+    "n_sweep": n_sweep,
+    "n_meas": n_meas,
+}
+
 # Calculate pulse length from modulation frequency
 period_ns = 1e9 / modulation_freq
 pulse_length_ns = period_ns / 2
@@ -150,7 +160,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.save(f'../data/cw_am_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
+np.savez(f'../data/cw_am_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
 
 active_counts = counts[:,:,0]
 inactive_counts = counts[:,:,1]

@@ -34,7 +34,19 @@ mod_depth       = 3e6      # FM modulation depth (Hz)
 n_sweep         = 401      # Number of sweep steps
 n_meas          = 5        # Number of measurements at each frequency
 
-freq_dev        = mod_depth / 2
+# Parameters stored in output file
+params = {
+    "modulation_freq": modulation_freq,
+    "meas_delay_ns": meas_delay_ns,
+    "start_freq": start_freq,
+    "stop_freq": stop_freq,
+    "mod_depth": mod_depth,
+    "n_sweep": n_sweep,
+    "n_meas": n_meas,
+}
+
+# Calculate the +- frequency deviation from modulation depth
+freq_dev = mod_depth / 2
 
 # Calculate pulse length from modulation frequency
 period_ns = 1e9 / modulation_freq
@@ -173,7 +185,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.save(f'../data/cw_fm_sweep/{start_date.isoformat().replace(':', '.')}.npy', counts)
+np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
 
 low_counts = counts[:,:,0]
 high_counts = counts[:,:,1]
