@@ -1,8 +1,3 @@
-# TODO:
-#  - AWG server parameters correct?
-#  - AWG channel number and power
-#  - Time tagger channel numbers, trigger level
-
 import time
 from datetime import datetime, timedelta
 import numpy as np
