@@ -21,7 +21,7 @@ wave laser_off = w1 + m2;
 assignWaveIndex(1, 2, laser_on, 0);
 assignWaveIndex(1, 2, laser_off, 1);
 
-laser_off=SHORTEST_PERIOD - LASER_ON;
+curr_laser_off=SHORTEST_PERIOD - LASER_ON;
 
 for (i = 0; i < N_SWEEP; i++) { 
     resetOscPhase();
@@ -31,11 +31,11 @@ for (i = 0; i < N_SWEEP; i++) {
         executeTableEntry(2);
         waitWave();
         executeTableEntry(1);
-        playHold(laser_off-100)
+        playHold(curr_laser_off-100)
         waitWave()
     }
 
-    laser_off+= PULSE_INCR;
+    curr_laser_off += PULSE_INCR;
 }
 
 
