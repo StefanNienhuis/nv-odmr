@@ -34,7 +34,7 @@ for (i = 0; i < N_SWEEP; i++) {
         executeTableEntry(0);
         waitWave();
         waitDigTrigger(1); 
-        Wait(MW_Delay);
+        Wait(MW_DELAY);
         executeTableEntry(1);
         waitWave();
         waitDigTrigger(1);

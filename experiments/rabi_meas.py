@@ -159,7 +159,6 @@ mw_sequence.constants = {
     'SHORTEST_PULSE': shortest_pulse,
     'PULSE_INCR': pulse_incr,
     'READOUT': readout,
-    'N_SWEEP': n_sweep,
     'N_MEAS': n_meas,
 }
 
