@@ -1,48 +1,44 @@
  /*
 To perform a rabi measurement the pulse length of the microwave drive should be drive for multiple mw pulse lengths.
 
- This is done by first exiciting the electrons with a laser pulse. After the laser a wait duration for the nv-centers to stabilize.
- This is followed by the mw drive for a specific pulse duration. Another wait duration for the nv-center to stabilize followed by a measurment period.
- To increase SNR multiple measurements per pulse duration are used.
-
- Since the marker channel is used to synchronize both the timetagger and laser 2 channels need to be used to send marker signals to both devices.
+This implementation uses triggers to synchronize with the mw channel. The procedure can be described as follows:
+1. Start initial laser
+2. Wait for falling edge trigger from mw than proceed waiting for mw delay.
+3. Shoot laser for readout time. 
 
  * Required constants on Sequence property constants:
- * LASER_ON             - Time laser is on 
- * SHORTEST_PERIOD      - Period length with shortest pulse duration s
- * PULSE_INCR           - Pulse increment for every n_sweep step
+ * INIT_LASER           - Time laser is on 
+ * MW_DELAY             - Time after laser until mw is turned on 
+ * READOUT              - Time final readout is done
  * N_SWEEP              - Number of sweep steps
  * N_MEAS               - Number of measurements at each time delay
 
 */
 
 
-wave w1 = zeros(100);
-wave m1 = marker(100, 0);
-wave laser_on = w1 + m1;
+wave w_init_laser = zeros(INIT_LASER);
+wave m_init_laser = marker(INIT_LASER, 1);
+wave init_laser = w_init_laser + m_init_laser;
 
-wave w1 = zeros(100);
-wave m2 = marker(100, 1);
-wave laser_off = w1 + m2;
+wave w_readout = zeros(READOUT);
+wave m_readout = marker(READOUT, 1);
+wave readout = w_readout + m_readout
 
-assignWaveIndex(1, 2, laser_on, 0);
-assignWaveIndex(1, 2, laser_off, 1);
-
-curr_laser_off=SHORTEST_PERIOD - LASER_ON;
+assignWaveIndex(1, 2, init_laser, 0);
+assignWaveIndex(1, 2, readout, 1);
 
 for (i = 0; i < N_SWEEP; i++) { 
     resetOscPhase();
 
     repeat(N_MEAS) {
         executeTableEntry(0);
-        executeTableEntry(2);
         waitWave();
+        waitDigTrigger(1); 
+        Wait(MW_Delay);
         executeTableEntry(1);
-        playHold(curr_laser_off-100)
-        waitWave()
+        waitWave();
+        waitDigTrigger(1);
     }
-
-    curr_laser_off += PULSE_INCR;
 }
 
 

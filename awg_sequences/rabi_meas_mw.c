@@ -1,62 +1,54 @@
  /* 
  To perform a rabi measurement the pulse length of the microwave drive should be drive for multiple mw pulse lengths.
 
- This is done by first exiciting the electrons with a laser pulse. After the laser a wait duration for the nv-centers to stabilize.
- This is followed by the mw drive for a specific pulse duration. Another wait duration for the nv-center to stabilize followed by a measurment period.
- To increase SNR multiple measurements per pulse duration are used.
-
- Since the marker channel is used to synchronize both the timetagger and laser 2 channels need to be used to send marker signals to both devices.
+ This implementation uses triggers to synchronize with the laser channel. The procedure can be described as follows:
+1. Wait until rising edge trigger from laser gets received
+2. Do nothing first half of initial laser time, last half of initial laser time readout.
+3. When initial laser is finished, start microwave sequence.
+4. When microwave is finished wait for rising edge from laser.
+5. Start readout process.
 
  * Required constants on Sequence property constants:
+ * INIT_LASER           - Time laser is on  
+ * READOUT              - Time final readout is done
  * SHORTEST_PULSE       - Shortest mw pulse duration
  * PULSE_INCR           - Pulse increment for every n_sweep step
  * N_SWEEP              - Number of sweep steps
  * N_MEAS               - Number of measurements at each time delay
 
 */
-wave w_until_mw = zeros(100);
-wave m_until_mw = marker(100, 1);
-wave until_mw = w_until_mw + m_until_mw;
 
-wave w_mw_on = ones(100);
-wave m_mw_on = marker(100,1);
-wave mw_on = m_mw_on+ w_mw_on;
-
-wave w_meas_delay = zeros(100);
-wave m_meas_delay = marker(100, 1);
-wave meas_delay = w_meas_delay + m_meas_delay;
-
-wave w_meas = zeros(100);
-wave m_meas = marker (100,0);
-wave meas = w_meas + m_meas;
+wave w_init_laser = zeros(INIT_LASER);
+wave m_l_init_laser = marker(INIT_LASER, 0);
+wave m_r_init_laser = marker(INIT_LASER, 1);
+wave m_init_laser = join(m_l_init_laser,m_r_init_laser);
+wave init_laser = w_init_laser + m_init_laser;
 
 
-assignWaveIndex(1, 2, until_mw, 0);
-assignWaveIndex(1, 2, mw_on, 1);
-assignWaveIndex(1, 2, meas_delay, 2);
-assignWaveIndex(1, 2,  meas, 3);
+wave w_mw = ones(128);
+
+wave readout = marker(READOUT, 1);
+
+assignWaveIndex(1, 2, init_laser, 0);
+assignWaveIndex(1, 2, w_mw, 1);
+assignWaveIndex(1, 2, readout, 2);
 
 curr_pulse = SHORTEST_PULSE;
-for (i = 0; i < N_SWEEP; i++) { 
+while(1) { 
+
+    for (int i = 0; i < N_meas; i++) {
+    waitDigTrigger(1);
     resetOscPhase();
+    executeTableEntry(0);
+    waitWave()
 
-    repeat(N_MEAS) {
-        executeTableEntry(0);
-        executeTableEntry(1);
-        waitWave();
+    executeTableEntry(1);
+    playHold(curr_pulse-128)
+    waitWave()
 
-        executeTableEntry(2);
-        playHold(curr_pulse-100);
-        waitWave();
-
-        executeTableEntry(3);
-        extecuteTableEntry(4);
-        waitWave();
-
-        executeTableEntry(5);
-        extecuteTableEntry(6);
-        waitWave()
+    waitDigTrigger(1);
+    executeTableEntry(2);
+    waitWave()
     }
-
     curr_pulse+= PULSE_INCR;
 }
