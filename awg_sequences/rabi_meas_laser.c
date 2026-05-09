@@ -1,8 +1,15 @@
  /*
+To perform a rabi measurement the pulse length of the microwave drive should be drive for multiple mw pulse lengths.
+
+ This is done by first exiciting the electrons with a laser pulse. After the laser a wait duration for the nv-centers to stabilize.
+ This is followed by the mw drive for a specific pulse duration. Another wait duration for the nv-center to stabilize followed by a measurment period.
+ To increase SNR multiple measurements per pulse duration are used.
+
+ Since the marker channel is used to synchronize both the timetagger and laser 2 channels need to be used to send marker signals to both devices.
+
  * Required constants on Sequence property constants:
  * LASER_ON             - Time laser is on 
- * SHORTEST_PERIOD      - Period length with shortest pulse duration 
- * OSC                  - Oscillator being swept
+ * SHORTEST_PERIOD      - Period length with shortest pulse duration s
  * PULSE_INCR           - Pulse increment for every n_sweep step
  * N_SWEEP              - Number of sweep steps
  * N_MEAS               - Number of measurements at each time delay

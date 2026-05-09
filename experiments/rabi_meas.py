@@ -115,7 +115,7 @@ awg_channel_mw.awg.configure_marker_and_trigger(
 awg_channel_laser = awg_device.sgchannels[AWG_CHANNEL_LASER]
 
 awg_channel_laser.configure_channel(
-    enable=False,
+    enable=True,
     output_range=10,
     center_frequency=drive_freq,
     rf_path=True
@@ -190,6 +190,7 @@ ct_laser.table[1].waveform.index = 1
 # Entry 2: playhold Laser on, in sequencer it is already on for 100 samples
 ct_laser.table[2].waveform.playHold = True
 ct_laser.table[2].waveform.length = laser_on - 100
+
 
 # Entry 0: period until mw_on
 ct_mw.table[0].waveform.index = 0
