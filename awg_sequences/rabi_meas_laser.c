@@ -5,6 +5,7 @@ This implementation uses triggers to synchronize with the mw channel. The proced
 1. Start initial laser
 2. Wait for falling edge trigger from mw than proceed waiting for mw delay.
 3. Shoot laser for readout time. 
+4. wait for rising edge trigger from mw to repeate procedure.
 
  * Required constants on Sequence property constants:
  * INIT_LASER           - Time laser is on 

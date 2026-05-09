@@ -5,22 +5,22 @@
 1. Wait until rising edge trigger from laser gets received
 2. Do nothing first half of initial laser time, last half of initial laser time readout.
 3. When initial laser is finished, start microwave sequence.
-4. When microwave is finished wait for rising edge from laser.
-5. Start readout process.
+4. When microwave is finished wait for rising edge trigger from laser.
+5. When trigger received start readout process.
+6. Repeat procedure.
 
  * Required constants on Sequence property constants:
  * INIT_LASER           - Time laser is on  
  * READOUT              - Time final readout is done
  * SHORTEST_PULSE       - Shortest mw pulse duration
  * PULSE_INCR           - Pulse increment for every n_sweep step
- * N_SWEEP              - Number of sweep steps
  * N_MEAS               - Number of measurements at each time delay
 
 */
 
 wave w_init_laser = zeros(INIT_LASER);
-wave m_l_init_laser = marker(INIT_LASER, 0);
-wave m_r_init_laser = marker(INIT_LASER, 1);
+wave m_l_init_laser = marker(INIT_LASER*0.5, 0);
+wave m_r_init_laser = marker(INIT_LASER*0.5, 1);
 wave m_init_laser = join(m_l_init_laser,m_r_init_laser);
 wave init_laser = w_init_laser + m_init_laser;
 
