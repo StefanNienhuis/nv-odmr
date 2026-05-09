@@ -153,15 +153,10 @@ cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, TT_MARKER_CH
 # Load AWG sequence
 mw_sequence = load_sequence("../awg_sequences/rabi_meas_mw.c")
 mw_sequence.constants = {
-    'LASER_ON': laser_on,
-    'MEAS_ON': meas_on,
-    'MW_DELAY': mw_delay,
-    'MEAS_DELAY': meas_delay,
     'SHORTEST_PULSE': shortest_pulse,
     'PULSE_INCR': pulse_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas,
-    'OSC'   : osc
 }
 
 laser_sequence = load_sequence("../awg_sequences/rabi_meas_laser.c")
@@ -171,7 +166,6 @@ laser_sequence.constants = {
     'PULSE_INCR': pulse_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas,
-    'OSC'   : osc
 }
 
 awg_channel_mw.awg.load_sequencer_program(mw_sequence)

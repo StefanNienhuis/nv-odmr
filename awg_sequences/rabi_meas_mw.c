@@ -1,10 +1,5 @@
  /*
  * Required constants on Sequence property constants:
- * LASER_ON             - Time laser is on 
- * DRIVE_FREQ           - drive frequency (Hz)
- * MW_DELAY             - Delay time after laser to start mw 
- * MEAS_DELAY           - Delay before measuring 
- * OSC                  - Oscillator being swept
  * SHORTEST_PULSE       - Shortest mw pulse duration
  * PULSE_INCR           - Pulse increment for every n_sweep step
  * N_SWEEP              - Number of sweep steps
