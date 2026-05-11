@@ -17,15 +17,20 @@ counts = counts / np.max(counts)
 curve, params = fit_curve(detuning, counts)
 fit = curve(detuning, *params)
 
+max_dip = np.min(fit)
+max_dip_detuning = detuning[np.argmin(np.abs(fit))]
+
 slope = np.gradient(fit, detuning)
 max_slope = np.max(np.abs(slope))
 max_slope_detuning = detuning[np.argmax(np.abs(slope))]
 
+print(f"Max dip at {max_dip_detuning/1e9} MHz")
 print(f"Max slope at {max_slope_detuning/1e9} MHz")
 
 plt.plot(detuning / 1e6, counts, 'x', color='gray', label='Data')
 plt.plot(detuning / 1e6, fit, color='red', label='Fit')
-plt.axvline(x=max_slope_detuning / 1e6, linestyle='--', label='Max Slope')
+plt.axvline(x=max_dip_detuning / 1e6, linestyle='--', label='Max Dip')
+plt.axvline(x=max_slope_detuning / 1e6, color='orange', linestyle='--', label='Max Slope')
 plt.xlabel('Detuning [MHz]')
 plt.legend()
 plt.show()

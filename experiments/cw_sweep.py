@@ -128,7 +128,7 @@ ct.table[1].waveform.index = 1
 
 # Entry 2: hold for remaining time
 ct.table[2].waveform.playHold = True
-ct.table[2].waveform.length = pulse_length - meas_delay - 1024
+ct.table[2].waveform.length = pulse_length - 1024
 
 awg_channel.awg.commandtable.upload_to_device(ct)
 
