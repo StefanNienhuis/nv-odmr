@@ -2,7 +2,6 @@ import time
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import createTimeTaggerNetwork, CountBetweenMarkers
 from util.load_sequence import load_sequence
@@ -40,120 +39,121 @@ expected_duration = n_sweep * n_meas * period_ns / 1e9
 print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
-meas_delay = int(round(meas_delay_ns * AWG_SAMPLE_RATE / 1e9 / 16) * 16)
+# Convert ns -> samples
+pulse_length = pulse_length_ns * AWG_SAMPLE_RATE / 1e9
+meas_delay = meas_delay_ns * AWG_SAMPLE_RATE / 1e9
+
+# Round counts to 16 - AWG zero pads otherwise
+pulse_length = int(round(pulse_length / 16) * 16)
+meas_delay = int(round(meas_delay / 16) * 16)
 
 center_freq = 2.8e9
 relative_start_freq = start_freq - center_freq
+
 freq = np.linspace(start_freq, stop_freq, n_sweep)
 freq_incr = (stop_freq - start_freq) / (n_sweep - 1)
 
-# AWG initialization (once)
+# Arbitrary Waveform Generator initialization
 awg_session = Session(AWG_SERVER_HOST, AWG_SERVER_PORT)
 awg_device = awg_session.connect_device(AWG_DEVICE)
+
 awg_device.check_compatibility()
 
 awg_channel = awg_device.sgchannels[AWG_CHANNEL]
+
 awg_channel.configure_channel(
-    enable=True, output_range=0,
-    center_frequency=center_freq, rf_path=True
+    enable=True,
+    output_range=0,
+    center_frequency=center_freq,
+    rf_path=True
 )
+
 awg_channel.configure_sine_generation(
-    enable=False, osc_index=osc1,
-    osc_frequency=relative_start_freq - freq_dev, phase=0
+    enable=False,
+    osc_index=osc1,
+    osc_frequency=relative_start_freq - freq_dev,
+    phase=0
 )
+
 awg_channel.configure_pulse_modulation(
-    enable=True, osc_index=osc1,
-    osc_frequency=relative_start_freq - freq_dev, phase=0
+    enable=True,
+    osc_index=osc1,
+    osc_frequency=relative_start_freq - freq_dev,
+    phase=0
 )
+
 awg_channel.configure_sine_generation(
-    enable=False, osc_index=osc2,
-    osc_frequency=relative_start_freq + freq_dev, phase=0
+    enable=False,
+    osc_index=osc2,
+    osc_frequency=relative_start_freq + freq_dev,
+    phase=0
 )
+
 awg_channel.configure_pulse_modulation(
-    enable=True, osc_index=osc2,
-    osc_frequency=relative_start_freq + freq_dev, phase=0
+    enable=True,
+    osc_index=osc2,
+    osc_frequency=relative_start_freq + freq_dev,
+    phase=0
 )
+
 awg_channel.awg.configure_marker_and_trigger(
     trigger_in_source='trigin0',
     trigger_in_slope='rising_edge',
     marker_out_source='output0_marker0'
 )
 
-# Time Tagger initialization (once)
+# Time Tagger initialization
 tt = createTimeTaggerNetwork('localhost:41101')
+
 tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.5)
 tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 
-# Lorentzian (diagnostic only)
-def lorentzian(f, f0, gamma, amplitude, offset):
-    return offset - amplitude * (gamma/2)**2 / ((f - f0)**2 + (gamma/2)**2)
+# Twice the number of samples since we get two pulses at different frequencies (square FM modulation)
+cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, TT_MARKER_CHANNEL, 2 * n_sweep * n_meas)
 
-def find_slope_at_zero(freq, fm_signal, search_window_hz=10e6):
-    """Find the strongest zero crossing of the FM signal and fit a line locally."""
-    sign_changes = np.where(np.diff(np.sign(fm_signal)))[0]
-    if len(sign_changes) == 0:
-        raise ValueError("no zero crossing in FM signal")
-    deltas = np.abs(np.diff(fm_signal)[sign_changes])
-    best_zc = sign_changes[np.argmax(deltas)]
-    f1, f2 = freq[best_zc], freq[best_zc + 1]
-    s1, s2 = fm_signal[best_zc], fm_signal[best_zc + 1]
-    f_zero = f1 - s1 * (f2 - f1) / (s2 - s1)
-    mask = np.abs(freq - f_zero) < search_window_hz
-    if mask.sum() < 3:
-        start = max(0, best_zc - 2)
-        stop  = min(len(freq), best_zc + 3)
-        mask = np.zeros_like(freq, dtype=bool)
-        mask[start:stop] = True
-    slope, _ = np.polyfit(freq[mask], fm_signal[mask], 1)
-    return f_zero, slope, mask
+# Load AWG sequence
+sequence = load_sequence("../awg_sequences/cw_fm_sweep.c")
+sequence.constants = {
+    'PULSE_LENGTH': pulse_length,
+    'MEAS_DELAY': meas_delay,
+    'OSC1': osc1,
+    'OSC2': osc2,
+    'START_FREQ': relative_start_freq,
+    'FREQ_DEV': freq_dev,
+    'FREQ_INCR': freq_incr,
+    'N_SWEEP': n_sweep,
+    'N_MEAS': n_meas
+}
 
-# Storage
-f0_per_pl          = np.full(n_pulse_lengths, np.nan)
-slope_per_pl       = np.full(n_pulse_lengths, np.nan)
-linewidth_per_pl   = np.full(n_pulse_lengths, np.nan)
-contrast_per_pl    = np.full(n_pulse_lengths, np.nan)
-count_rate_per_pl  = np.full(n_pulse_lengths, np.nan)
-eta_B_per_pl       = np.full(n_pulse_lengths, np.nan)
-sigma_B_per_pl     = np.full(n_pulse_lengths, np.nan)
-all_counts         = []
-all_fm_signals     = []
+awg_channel.awg.load_sequencer_program(sequence)
+awg_channel.awg.wait_done()
 
-for pl_idx, pl_ns in enumerate(pulse_lengths_ns):
-    pulse_length = int(round(pl_ns * AWG_SAMPLE_RATE / 1e9 / 16) * 16)
-    modulation_freq = 1e9 / (2 * pl_ns)
-    t_sweep = 2 * n_sweep * n_meas * pl_ns / 1e9
-    print(f"\n[{pl_idx+1}/{n_pulse_lengths}] "
-          f"pulse_length = {pl_ns/1e6:.2f} ms, mod_freq = {modulation_freq:.2f} Hz, "
-          f"sweep duration ≈ {t_sweep:.1f}s")
+# Load command table
+# Command table used since it's more efficient than playWave
+# https://docs.zhinst.com/shfsg_user_manual/tutorials/tutorial_command_table.html#introduction-to-the-command-table
+ct_schema = awg_channel.awg.commandtable.load_validation_schema()
+ct = CommandTable(ct_schema)
 
-    sequence = load_sequence("../awg_sequences/cw_fm_sweep.c")
-    sequence.constants = {
-        'PULSE_LENGTH': pulse_length,
-        'MEAS_DELAY': meas_delay,
-        'OSC1': osc1,
-        'OSC2': osc2,
-        'START_FREQ': relative_start_freq,
-        'FREQ_DEV': freq_dev,
-        'FREQ_INCR': freq_incr,
-        'N_SWEEP': n_sweep,
-        'N_MEAS': n_meas
-    }
-    awg_channel.awg.load_sequencer_program(sequence)
-    awg_channel.awg.wait_done()
+# Entry 0: play waveform 0, osc1
+ct.table[0].waveform.index = 0
+ct.table[0].oscillatorSelect.value = osc1
 
-    ct_schema = awg_channel.awg.commandtable.load_validation_schema()
-    ct = CommandTable(ct_schema)
-    ct.table[0].waveform.index = 0
-    ct.table[0].oscillatorSelect.value = osc1
-    ct.table[1].waveform.index = 1
-    ct.table[1].oscillatorSelect.value = osc1
-    ct.table[2].waveform.index = 0
-    ct.table[2].oscillatorSelect.value = osc2
-    ct.table[3].waveform.index = 1
-    ct.table[3].oscillatorSelect.value = osc2
-    ct.table[4].waveform.playHold = True
-    ct.table[4].waveform.length = pulse_length - meas_delay - 1024
-    awg_channel.awg.commandtable.upload_to_device(ct)
+# Entry 1: play waveform 1, osc1
+ct.table[1].waveform.index = 1
+ct.table[1].oscillatorSelect.value = osc1
+
+# Entry 2: play waveform 0, osc2
+ct.table[2].waveform.index = 0
+ct.table[2].oscillatorSelect.value = osc2
+
+# Entry 3: play waveform 1, osc2
+ct.table[3].waveform.index = 1
+ct.table[3].oscillatorSelect.value = osc2
+
+ct.table[4].waveform.playHold = True
+ct.table[4].waveform.length = pulse_length - meas_delay - 1024
+
+awg_channel.awg.commandtable.upload_to_device(ct)
 
 # Start time tagger and AWG sequence
 cbm.start()
