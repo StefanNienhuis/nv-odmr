@@ -22,9 +22,9 @@ TT_MARKER_CHANNEL = 2
 modulation_freq = 5      # AM modulation frequency (Hz)
 meas_delay_ns   = 20e3     # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
-start_freq      = 2.84e9   # Sweep start frequency (Hz)
-stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
-n_sweep         = 401      # Number of sweep steps
+start_freq      = 2.85e9   # Sweep start frequency (Hz)
+stop_freq       = 2.89e9   # Sweep stop frequency (Hz)
+n_sweep         = 201      # Number of sweep steps
 n_meas          = 5       # Number of measurements at each frequency
 
 # Parameters stored in output file
@@ -66,6 +66,8 @@ awg_device = awg_session.connect_device(AWG_DEVICE)
 awg_device.check_compatibility()
 
 awg_channel = awg_device.sgchannels[AWG_CHANNEL]
+
+awg_channel.synchronization.enable(0)
 
 awg_channel.configure_channel(
     enable=True,
@@ -155,7 +157,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/cw_am_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
+np.savez(f'../data/cw_am_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
 
 active_counts = counts[:,:,0]
 inactive_counts = counts[:,:,1]

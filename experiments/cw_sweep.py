@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
+import pycobolt
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -62,6 +63,8 @@ awg_device = awg_session.connect_device(AWG_DEVICE)
 awg_device.check_compatibility()
 
 awg_channel = awg_device.sgchannels[AWG_CHANNEL]
+
+awg_channel.synchronization.enable(0)
 
 awg_channel.configure_channel(
     enable=True,
@@ -132,6 +135,12 @@ ct.table[2].waveform.length = pulse_length - 1024
 
 awg_channel.awg.commandtable.upload_to_device(ct)
 
+# Laser setup
+laser = pycobolt.CoboltLaser(serialnumber="31977")
+laser.constant_current()
+print(laser.get_mode())
+laser.set_current(55)
+
 # Start time tagger and AWG sequence
 cbm.start()
 tt.sync()
@@ -144,7 +153,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
+np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
 
 print(counts)
 print(cbm.getBinWidths())

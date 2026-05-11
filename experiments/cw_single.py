@@ -56,6 +56,8 @@ awg_device.check_compatibility()
 
 awg_channel = awg_device.sgchannels[AWG_CHANNEL]
 
+awg_channel.synchronization.enable(0)
+
 awg_channel.configure_channel(
     enable=True,
     output_range=10,
@@ -134,7 +136,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.savez(f'../data/cw_single/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
+np.savez(f'../data/cw_single/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
 
 print(f"Mean: {counts.mean()}")
 print(f"Stddev: {counts.std()}")

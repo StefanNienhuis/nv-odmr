@@ -30,7 +30,7 @@ var i;
 for (i = 0; i < N_SWEEP; i++) {
     var tau_hold = START_TAU + (i * TAU_INCR) - 16;
 
-    if (tau_hold >= 0) {
+    if (tau_hold > 0) {
         // tau >= 16 -> play wave once and hold for remainder
         repeat (N_MEAS) {
             waitDigTrigger(1);
@@ -47,7 +47,7 @@ for (i = 0; i < N_SWEEP; i++) {
 
             waitWave();
         }
-    } else if (tau_hold >= -16) {
+    } else if (tau_hold > -16) {
         // 0 <= tau <= 16 -> play wave once
         repeat (N_MEAS) {
             waitDigTrigger(1);

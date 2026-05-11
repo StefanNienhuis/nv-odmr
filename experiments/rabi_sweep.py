@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
+import pycobolt
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -13,27 +14,27 @@ AWG_SERVER_HOST = 'localhost'
 AWG_SERVER_PORT = 8004
 AWG_DEVICE = 'DEV12120'
 AWG_MW_CHANNEL = 2
-AWG_LASER_CHANNEL = 4
+AWG_LASER_CHANNEL = 0
 AWG_SAMPLE_RATE = 2e9
 
 TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 # Largely based on: https://iopscience.iop.org/article/10.1088/1367-2630/ad20b0
-init_length_ns = 3e3
+init_length_ns = 5e3
 dark_length_ns = 250
-meas_length_ns = 1e3
+meas_length_ns = 2e3
 drive_freq = 2.86e9
 osc = 0
 
-start_tau_ns = 0
+start_tau_ns = 0e3
 stop_tau_ns = 4e3
-n_sweep = 251
-n_meas = 100
+n_sweep = 501
+n_meas = 10000
 
 # Synchronization is done by sending internal trigger periodically. Max period is used, with some margin for safety.
 max_period_ns = init_length_ns + dark_length_ns + stop_tau_ns + meas_length_ns
-sync_overhead = 1.05
+sync_overhead = 2
 
 # Parameters stored in output file
 params = {
@@ -57,7 +58,7 @@ meas_length = meas_length_ns * AWG_SAMPLE_RATE / 1e9
 
 tau_incr_ns = (stop_tau_ns - start_tau_ns) / (n_sweep - 1)
 
-start_tau_ns = start_tau_ns * AWG_SAMPLE_RATE / 1e9
+start_tau = start_tau_ns * AWG_SAMPLE_RATE / 1e9
 tau_incr = tau_incr_ns * AWG_SAMPLE_RATE / 1e9
 
 if tau_incr != round(tau_incr):
@@ -114,7 +115,7 @@ awg_mw.awg.configure_marker_and_trigger(
 
 awg_laser.configure_channel(
     enable=True,
-    output_range=0,
+    output_range=10,
     center_frequency=center_freq,
     rf_path=True
 )
@@ -149,7 +150,7 @@ mw_sequence.constants = {
     'INIT_LENGTH': init_length,
     'DARK_LENGTH': dark_length,
     'MEAS_LENGTH': meas_length,
-    'START_TAU': start_tau_ns,
+    'START_TAU': start_tau,
     'TAU_INCR': tau_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
@@ -179,7 +180,7 @@ laser_sequence.constants = {
     'INIT_LENGTH': init_length,
     'DARK_LENGTH': dark_length,
     'MEAS_LENGTH': meas_length,
-    'START_TAU': start_tau_ns,
+    'START_TAU': start_tau,
     'TAU_INCR': tau_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
@@ -203,6 +204,12 @@ laser_ct.table[2].waveform.index = 2
 
 awg_laser.awg.commandtable.upload_to_device(laser_ct)
 
+# Laser setup
+laser = pycobolt.CoboltLaser(serialnumber="31977")
+laser.current_modulation_mode()
+print(laser.get_mode())
+laser.set_modulation_current(55)
+
 # Start time tagger and AWG sequence
 cbm.start()
 tt.sync()
@@ -217,7 +224,9 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/rabi_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
+np.savez(f'../data/rabi_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
+
+print(counts)
 
 ref_counts = counts[:,:,0]
 meas_counts = counts[:,:,1]
@@ -227,6 +236,6 @@ mean_meas_counts = np.mean(meas_counts, axis=1)
 
 mean_counts_norm = (mean_ref_counts - mean_meas_counts) / mean_ref_counts
 
-plt.plot(tau_ns * 1e9, mean_counts_norm)
-plt.xlabel('tau (ns)')
+plt.plot(tau_ns / 1e3, mean_counts_norm)
+plt.xlabel('tau (us)')
 plt.show()

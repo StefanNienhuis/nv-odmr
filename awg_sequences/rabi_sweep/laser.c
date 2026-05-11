@@ -16,7 +16,7 @@ wave dark = marker(DARK_LENGTH, 0);
 wave meas = marker(MEAS_LENGTH, 1);
 
 assignWaveIndex(1, 2, init, 0);
-assignWaveIndex(1, 2, mw, 1);
+assignWaveIndex(1, 2, dark, 1);
 assignWaveIndex(1, 2, meas, 2);
 
 var i;

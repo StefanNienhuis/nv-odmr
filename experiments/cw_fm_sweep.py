@@ -73,6 +73,8 @@ awg_device.check_compatibility()
 
 awg_channel = awg_device.sgchannels[AWG_CHANNEL]
 
+awg_channel.synchronization.enable(0)
+
 awg_channel.configure_channel(
     enable=True,
     output_range=0,
@@ -180,7 +182,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
+np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
 
 low_counts = counts[:,:,0]
 high_counts = counts[:,:,1]
