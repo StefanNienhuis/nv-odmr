@@ -57,6 +57,7 @@ for (i = 0; i < N_SWEEP; i++) {
 
             // MW
             executeTableEntry(1);
+            playHold(0);
 
             // Measure
             executeTableEntry(2);
@@ -72,6 +73,8 @@ for (i = 0; i < N_SWEEP; i++) {
             executeTableEntry(0);
 
             // No MW
+            playHold(0);
+            playHold(0);
 
             // Measure
             executeTableEntry(2);
