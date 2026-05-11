@@ -28,11 +28,6 @@ slope = np.gradient(fit, detuning)
 max_slope = np.max(np.abs(slope))
 max_slope_detuning = detuning[np.argmax(np.abs(slope))]
 
-# Plot individual components
-# plt.plot(mean_active_counts, label='on')
-# plt.plot(mean_inactive_counts, label='off')
-# plt.legend()
-# plt.show()
 
 print(f"Max slope at {max_slope_detuning/1e6} MHz")
 

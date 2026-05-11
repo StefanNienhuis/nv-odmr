@@ -9,6 +9,8 @@ from util.cw_am import (
     init_time_tagger,
     configure_sweep,
     run_sweep,
+    max_slope_per_pulse_length,
+    std_per_pulse_length
 )
 
 start_date = datetime.now()
@@ -26,6 +28,9 @@ start_pulse_length_ns = 5e6
 stop_pulse_length_ns  = 200e6
 n_pulse_lengths       = 5
 
+# Std measurement parameters
+n_std_meas = 100 
+
 params = {
     "start_pulse_length_ns": start_pulse_length_ns,
     "stop_pulse_length_ns":stop_pulse_length_ns,
@@ -35,6 +40,7 @@ params = {
     "stop_freq": stop_freq,
     "n_sweep": n_sweep,
     "n_meas": n_meas,
+    "n_std_meas": n_std_meas,
 }
 
 pulse_lengths_ns = np.logspace(
@@ -43,11 +49,16 @@ pulse_lengths_ns = np.logspace(
     n_pulse_lengths,
 )
 
-expected_duration = sum(2 * n_sweep * n_meas * pl / 1e9 for pl in pulse_lengths_ns)
+expected_sweep_duration = sum(2 * n_sweep * n_meas * pl / 1e9 for pl in pulse_lengths_ns)
+expected_std_duration   = sum(2 * 1       * n_std_meas * pl / 1e9 for pl in pulse_lengths_ns)
+expected_duration = expected_sweep_duration + expected_std_duration
 print(f"Pulse lengths (ms): {pulse_lengths_ns/1e6}")
 print(f"Modulation freq (Hz): {1e9/(2*pulse_lengths_ns)}")
+print(f"Expected sweep duration: {expected_sweep_duration:.1f}s")
+print(f"Expected std   duration: {expected_std_duration:.1f}s")
 print(f"Expected total duration: {expected_duration:.1f}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
+
 
 meas_delay = ns_to_samples(meas_delay_ns)
 
@@ -79,26 +90,55 @@ for pl_idx, pl_ns in enumerate(pulse_lengths_ns):
     counts = run_sweep(awg_channel, tt, n_sweep, n_meas, timeout=t_sweep * 1.5)
     all_counts.append(counts)
 
-np.savez(f'../persist/cw_am_sweep_mod_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
 
-# Aggregated view: heatmap of normalized AM signal vs (frequency, pulse length)
-all_counts_arr = np.array(all_counts)
-mean_active   = all_counts_arr[:, :, :, 0].mean(axis=2)
-mean_inactive = all_counts_arr[:, :, :, 1].mean(axis=2)
-am_signal = mean_inactive - mean_active  # (n_pulse_lengths, n_sweep)
+max_slopes, freqs_at_max = max_slope_per_pulse_length(all_counts, freq)
 
-# Per-row normalization so line shapes are comparable across pulse lengths
-am_norm = am_signal / np.max(np.abs(am_signal), axis=1, keepdims=True)
-
-fig, ax = plt.subplots(figsize=(8, 5))
-mesh = ax.pcolormesh(
-    freq / 1e9, pulse_lengths_ns / 1e6, am_norm,
-    shading='nearest', cmap='RdBu_r', vmin=-1, vmax=1,
+all_std_counts = []
+ 
+for pl_idx, (pl_ns, f_at_max) in enumerate(zip(pulse_lengths_ns, freqs_at_max)):
+    pulse_length = ns_to_samples(pl_ns)
+    rel_f        = f_at_max - CENTER_FREQ
+    t_std        = 2 * 1 * n_std_meas * pl_ns / 1e9
+    print(f"\n[std {pl_idx+1}/{n_pulse_lengths}] "
+          f"pulse_length = {pl_ns/1e6:.2f} ms, "
+          f"freq = {f_at_max/1e9:.6f} GHz, "
+          f"duration ≈ {t_std:.1f}s")
+ 
+    configure_sweep(
+        awg_channel, pulse_length, meas_delay,
+        rel_f, 0.0,
+        n_sweep=1, n_meas=n_std_meas, osc=osc,
+    )
+    counts = run_sweep(awg_channel, tt, n_sweep=1, n_meas=n_std_meas, timeout=t_std * 1.5)
+    all_std_counts.append(counts)
+ 
+stds = std_per_pulse_length(all_std_counts)
+T_shot = 2 * pulse_lengths_ns * 1e-9          # seconds, per pulse length
+sensitivity = stds / max_slopes_fm * np.sqrt(T_shot)   
+ 
+# === Save ====================================================================
+np.savez(
+    f"../persist/cw_am_sweep_mod_sweep/{start_date.isoformat().replace(':', '.')}.npz",
+    max_slopes=max_slopes,
+    freqs_at_max=freqs_at_max,
+    stds=stds,
+    sensitivity=sensitivity,
+    pulse_lengths_ns=pulse_lengths_ns,
+    params=params,
 )
-ax.set_yscale('log')  # pulse_lengths_ns is logspaced
-ax.set_xlabel('MW frequency (GHz)')
-ax.set_ylabel('Pulse length (ms)')
-ax.set_title('Normalized AM signal (inactive − active)')
-fig.colorbar(mesh, ax=ax, label='Normalized')
-plt.tight_layout()
+ 
+# === Plots ===================================================================
+plt.plot(pulse_lengths_ns / 1e6, max_slopes, 'o-')
+plt.xlabel('pulse length [ms]')
+plt.ylabel(r'max $|d\,\mathrm{am\_counts}/df|$')
+plt.show()
+ 
+plt.plot(pulse_lengths_ns / 1e6, freqs_at_max, 'o-')
+plt.xlabel('pulse length [ms]')
+plt.ylabel('frequency at max slope [Hz]')
+plt.show()
+ 
+plt.plot(pulse_lengths_ns / 1e6, sensitivity, 'o-')
+plt.xlabel('pulse length [ms]')
+plt.ylabel(r'sensitivity $\sigma_\mathrm{AM}/\max|d\,\mathrm{am}/df|$ [Hz]')
 plt.show()

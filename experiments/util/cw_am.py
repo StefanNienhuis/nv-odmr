@@ -119,3 +119,78 @@ def run_sweep(awg_channel, tt, n_sweep, n_meas, timeout):
     while not cbm.ready():
         time.sleep(0.2)
     return np.array(cbm.getData()).reshape((n_sweep, n_meas, 2))
+
+def max_slope_per_pulse_length(all_counts, freq):
+    """
+    For each pulse length, build the normalized AM signal
+        am_counts = (mean_inactive - mean_active) / mean_inactive
+    and return:
+      - the maximum |d(am_counts)/d(freq)|
+      - the frequency at which that maximum occurs
+
+    Parameters
+    ----------
+    all_counts : list of np.ndarray
+        One entry per pulse length, each of shape (n_sweep, n_meas, 2).
+        The trailing axis is (MW-active, MW-inactive).
+    freq : np.ndarray, shape (n_sweep,)
+        Frequency axis used in the sweeps (same for every pulse length).
+
+    Returns
+    -------
+    max_slopes : np.ndarray, shape (n_pulse_lengths,)
+        Maximum absolute slope of am_counts vs freq.
+    freqs_at_max : np.ndarray, shape (n_pulse_lengths,)
+        Frequency at which the maximum slope is reached.
+    """
+    n_pl = len(all_counts)
+    max_slopes   = np.empty(n_pl)
+    freqs_at_max = np.empty(n_pl)
+
+    for i, counts in enumerate(all_counts):
+        # average over the n_meas repetitions at each frequency step
+        mean_active   = counts[:, :, 0].mean(axis=1)   # MW ON
+        mean_inactive = counts[:, :, 1].mean(axis=1)   # MW OFF
+        am_counts = (mean_inactive - mean_active) / mean_inactive
+
+        # slope d(am_counts)/d(freq) via central differences
+        slope = np.gradient(am_counts, freq)
+
+        idx = int(np.argmax(np.abs(slope)))
+        max_slopes[i]   = np.abs(slope[idx])
+        freqs_at_max[i] = freq[idx]
+
+    return max_slopes, freqs_at_max
+
+def std_per_pulse_length(all_std_counts):
+    """
+    For each pulse length, compute the per-shot normalized AM signal
+ 
+        am_per_shot = (inactive - active) / inactive
+ 
+    at a single (fixed) frequency, then return the standard deviation of
+    that quantity across the n_std_meas repetitions. The input shape is
+    expected to be (1, n_std_meas, 2) -- i.e. produced by `run_sweep` with
+    `n_sweep=1` and `n_meas=n_std_meas`.
+ 
+    Parameters
+    ----------
+    all_std_counts : list of np.ndarray
+        One entry per pulse length, each of shape (1, n_std_meas, 2).
+        The trailing axis is (MW-active, MW-inactive).
+ 
+    Returns
+    -------
+    stds : np.ndarray, shape (n_pulse_lengths,)
+        Std of am_per_shot across the n_std_meas repetitions.
+    """
+    n_pl = len(all_std_counts)
+    stds = np.empty(n_pl)
+ 
+    for i, counts in enumerate(all_std_counts):
+        active   = counts[0, :, 0]   # MW ON
+        inactive = counts[0, :, 1]   # MW OFF
+        am_per_shot = (inactive - active) / inactive
+        stds[i] = am_per_shot.std()
+ 
+    return stds

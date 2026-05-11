@@ -58,22 +58,15 @@ counts = run_sweep(awg_channel, tt, n_sweep, n_meas, timeout=t_sweep * 1.5)
 
 mean_active   = counts[:, :, 0].mean(axis=1)   # MW ON
 mean_inactive = counts[:, :, 1].mean(axis=1)   # MW OFF
-am_signal = mean_inactive - mean_active
+am_counts = (mean_inactive - mean_active) / mean_inactive
 
 
 np.savez(f'../persist/cw_am_sweep/{start_date.isoformat().replace(':', '.')}.npy', data=counts, params=params)
 
-fig, ax = plt.subplots()
-ax.plot(freq / 1e9, am_signal, 'o-', markersize=4, label='inactive − active')
-ax.axvline(f0 / 1e9, color='red', linestyle='--', alpha=0.5,
-           label=f'f0 = {f0/1e9:.5f} GHz')
-f_dense = np.linspace(freq[0], freq[-1], 500)
-ax.plot(f_dense / 1e9, lorentzian_peak(f_dense, *popt),
-        'r-', alpha=0.7, label='Lorentzian fit')
-ax.set_xlabel('MW frequency (GHz)')
-ax.set_ylabel('inactive − active (counts per pulse)')
-ax.set_title(f'AM subtracted signal at pulse_length = {pulse_length_ns/1e6:.0f} ms')
-ax.legend()
-ax.grid(True, alpha=0.5)
-plt.tight_layout()
+plt.plot(freq, mean_active_counts, label='on')
+plt.plot(freq, mean_inactive_counts, label='off')
+plt.legend()
+plt.show()
+
+plt.plot(freq, am_counts, label='on')
 plt.show()
