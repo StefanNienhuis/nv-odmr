@@ -219,16 +219,16 @@ counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
 np.savez(f'../data/t1_measurement/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
-print(counts)
-
 meas_counts = counts[:,:,0]
 ref_counts = counts[:,:,1]
 
-mean_ref_counts = np.mean(ref_counts, axis=1)
-mean_meas_counts = np.mean(meas_counts, axis=1)
+print(np.sum(counts, axis=1))
 
-mean_counts_norm = (mean_ref_counts - mean_meas_counts) / mean_ref_counts
+total_meas_counts = np.sum(meas_counts, axis=1)
+total_ref_counts = np.sum(ref_counts, axis=1)
 
-plt.plot(dark_ns / 1e3, mean_counts_norm)
+total_counts_norm = (total_ref_counts - total_meas_counts) / total_ref_counts
+
+plt.plot(dark_ns / 1e3, total_counts_norm)
 plt.xlabel('tau (us)')
 plt.show()

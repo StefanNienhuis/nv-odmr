@@ -12,12 +12,12 @@ tau_ns = np.linspace(params['start_tau_ns'], params['stop_tau_ns'], params['n_sw
 meas_counts = counts[:,:,0]
 ref_counts = counts[:,:,1]
 
-mean_ref_counts = np.mean(ref_counts, axis=1)
-mean_meas_counts = np.mean(meas_counts, axis=1)
+total_ref_counts = np.sum(ref_counts, axis=1)
+total_meas_counts = np.sum(meas_counts, axis=1)
 
-mean_counts_norm = (mean_ref_counts - mean_meas_counts) / mean_ref_counts
+total_counts_norm = (total_ref_counts - total_meas_counts) / total_ref_counts
 
-curve, params = fit_curve(tau_ns, mean_counts_norm)
+curve, params = fit_curve(tau_ns, total_counts_norm)
 fit = curve(tau_ns, *params)
 
 print(*params)
