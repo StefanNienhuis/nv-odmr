@@ -6,11 +6,11 @@ center_freq = 2.87e9
 
 start_freq      = 2.84e9
 stop_freq       = 2.90e9
-n_sweep         = 101
+n_sweep         = 401
 
 freqs = np.linspace(start_freq, stop_freq, n_sweep)
 detuning = freqs - center_freq
-results = np.load('../persist/cw_sweep/2026-05-06T12.13.59.362988.npy')
+results = np.load('../data/cw_sweep/2026-05-11T16.30.52.401103.npy.npz')
 
 counts = results['data']
 counts = counts / np.max(counts)

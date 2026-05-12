@@ -26,16 +26,16 @@ LASER_CURRENT = 55
 # Largely based on: https://iopscience.iop.org/article/10.1088/1367-2630/ad20b0
 init_length_ns = 2e3
 dark_length_ns = 400
-readout_length_ns = 2e3
+readout_length_ns = 2e3 + 8 # Must be different from init length - AWG doesn't work otherwise
 meas_length_ns = 250
 ref_length_ns = 250
-drive_freq = 2.86e9
+drive_freq = 2.8664e9
 osc = 0
 
 start_tau_ns = 0e3
-stop_tau_ns = 4e3
-n_sweep = 501
-n_meas = 10000
+stop_tau_ns = 2e3
+n_sweep = 126
+n_meas = 50000
 
 # Synchronization is done by sending internal trigger periodically. Max period is used, with some margin for safety.
 max_period_ns = init_length_ns + dark_length_ns + stop_tau_ns + readout_length_ns
@@ -85,6 +85,7 @@ awg_device = awg_session.connect_device(AWG_DEVICE)
 awg_device.check_compatibility()
 
 # Configure internal trigger for synchronization
+awg_device.system.internaltrigger.enable(0)
 awg_device.system.internaltrigger.holdoff(max_period_ns * sync_overhead / 1e9)
 awg_device.system.internaltrigger.repetitions(n_sweep * n_meas)
 awg_device.system.internaltrigger.synchronization.enable(1)
@@ -227,7 +228,7 @@ tt.sync()
 awg_device.system.internaltrigger.enable(1)
 awg_mw.awg.enable_sequencer(single=True)
 awg_laser.awg.enable_sequencer(single=True)
-awg_mw.awg.wait_done(timeout=expected_duration*1.5)
+awg_mw.awg.wait_done(timeout=expected_duration*15)
 
 while not cbm.ready():
     time.sleep(0.2)
@@ -240,6 +241,9 @@ np.savez(f'../data/rabi_sweep/{start_date.isoformat().replace(":", ".")}.npz', d
 print(counts)
 
 print(np.sum(counts, axis=1))
+
+meas_counts = counts[:,:,0]
+ref_counts = counts[:,:,1]
 
 total_meas_counts = np.sum(meas_counts, axis=1)
 total_ref_counts = np.sum(ref_counts, axis=1)
