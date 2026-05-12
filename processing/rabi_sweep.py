@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from util.rabi_oscillation_fit import fit_curve
 
-results = np.load('../data/rabi_sweep/2026-05-11T16.55.35.007772.npy.npz', allow_pickle=True)
+results = np.load('../persist/rabi_sweep/2026-05-11T16.55.35.007772.npy.npz', allow_pickle=True)
 counts = results['data']
 params = results['params'].item()
 
@@ -23,7 +23,6 @@ fit = curve(tau_ns, *params)
 print(*params)
 
 plt.plot(tau_ns, mean_counts_norm, 'x', color='gray', label='Data')
-plt.plot(tau_ns, fit, color='red', label='Fit')
 plt.xlabel('$\\tau$ (ns)')
 plt.legend()
 plt.show()

@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
+import pycobolt
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -18,6 +19,9 @@ AWG_SAMPLE_RATE = 2e9
 
 TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
+
+LASER_SN = '31977'
+LASER_CURRENT = 55
 
 # Pi pulse length from rabi_sweep
 mw_length_ns = 5e3
@@ -204,6 +208,12 @@ awg_laser.awg.commandtable.upload_to_device(laser_ct)
 # Start time tagger and AWG sequence
 cbm.start()
 tt.sync()
+
+# Laser setup
+laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
+laser.current_modulation_mode()
+laser.set_modulation_current(LASER_CURRENT)
+print(f"Laser mode: {laser.get_mode()}")
 
 awg_mw.awg.enable_sequencer(single=True)
 awg_laser.awg.enable_sequencer(single=True)

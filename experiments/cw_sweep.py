@@ -19,6 +19,9 @@ AWG_SAMPLE_RATE = 2e9
 TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
+LASER_SN = '31977'
+LASER_CURRENT = 55
+
 # Parameters
 pulse_length_ns = 100e6      # Pulse duration (ns)
 meas_delay_ns   = 50e3      # Delay before measuring (ns)
@@ -136,10 +139,10 @@ ct.table[2].waveform.length = pulse_length - 1024
 awg_channel.awg.commandtable.upload_to_device(ct)
 
 # Laser setup
-laser = pycobolt.CoboltLaser(serialnumber="31977")
+laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
 laser.constant_current()
-print(laser.get_mode())
-laser.set_current(55)
+laser.set_current(LASER_CURRENT)
+print(f"Laser mode: {laser.get_mode()}")
 
 # Start time tagger and AWG sequence
 cbm.start()

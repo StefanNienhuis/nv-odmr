@@ -3,3 +3,4 @@ matplotlib~=3.10.8
 qutip~=5.2.3
 scipy~=1.17.1
 zhinst-toolkit~=1.3.0
+pycobolt @ git+https://github.com/cobolt-lasers/pycobolt.git@1333e536ef87e2ec6a94d123559d258ae848aede

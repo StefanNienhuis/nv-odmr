@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
+import pycobolt
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -17,6 +18,9 @@ AWG_SAMPLE_RATE = 2e9
 
 TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
+
+LASER_SN = '31977'
+LASER_CURRENT = 55
 
 # Parameters - should match the ones used in sweep
 pulse_length_ns = 100e6     # Pulse duration (ns)
@@ -123,6 +127,12 @@ ct.table[2].waveform.playHold = True
 ct.table[2].waveform.length = pulse_length - meas_delay - 1024
 
 awg_channel.awg.commandtable.upload_to_device(ct)
+
+# Laser setup
+laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
+laser.constant_current()
+laser.set_current(LASER_CURRENT)
+print(f"Laser mode: {laser.get_mode()}")
 
 # Start time tagger and AWG sequence
 cbm.start()

@@ -20,6 +20,9 @@ AWG_SAMPLE_RATE = 2e9
 TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
+LASER_SN = '31977'
+LASER_CURRENT = 55
+
 # Largely based on: https://iopscience.iop.org/article/10.1088/1367-2630/ad20b0
 init_length_ns = 5e3
 dark_length_ns = 250
@@ -205,10 +208,10 @@ laser_ct.table[2].waveform.index = 2
 awg_laser.awg.commandtable.upload_to_device(laser_ct)
 
 # Laser setup
-laser = pycobolt.CoboltLaser(serialnumber="31977")
+laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
 laser.current_modulation_mode()
-print(laser.get_mode())
-laser.set_modulation_current(55)
+laser.set_modulation_current(LASER_CURRENT)
+print(f"Laser mode: {laser.get_mode()}")
 
 # Start time tagger and AWG sequence
 cbm.start()
