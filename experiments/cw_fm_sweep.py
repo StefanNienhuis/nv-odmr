@@ -192,7 +192,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
+np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
 low_counts = counts[:,:,0]
 high_counts = counts[:,:,1]

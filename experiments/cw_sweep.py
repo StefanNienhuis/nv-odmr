@@ -156,7 +156,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
+np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
 print(counts)
 print(cbm.getBinWidths())

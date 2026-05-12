@@ -167,7 +167,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/cw_am_sweep/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
+np.savez(f'../data/cw_am_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
 active_counts = counts[:,:,0]
 inactive_counts = counts[:,:,1]

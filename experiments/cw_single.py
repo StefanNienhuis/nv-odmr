@@ -146,7 +146,7 @@ while not cbm.ready():
 
 counts = cbm.getData()
 counts = np.array(counts)
-np.savez(f'../data/cw_single/{start_date.isoformat().replace(":", ".")}.npy', data=counts, params=params)
+np.savez(f'../data/cw_single/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
 print(f"Mean: {counts.mean()}")
 print(f"Stddev: {counts.std()}")

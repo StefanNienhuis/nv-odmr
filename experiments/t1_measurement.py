@@ -23,34 +23,31 @@ TT_MARKER_CHANNEL = 2
 LASER_SN = '31977'
 LASER_CURRENT = 55
 
-# Largely based on: https://iopscience.iop.org/article/10.1088/1367-2630/ad20b0
 init_length_ns = 2e3
-dark_length_ns = 400
 readout_length_ns = 2e3
 meas_length_ns = 250
 ref_length_ns = 250
 drive_freq = 2.86e9
 osc = 0
 
-start_tau_ns = 0e3
-stop_tau_ns = 4e3
+start_dark_ns = 0e3
+stop_dark_ns = 4e3
 n_sweep = 501
 n_meas = 10000
 
 # Synchronization is done by sending internal trigger periodically. Max period is used, with some margin for safety.
-max_period_ns = init_length_ns + dark_length_ns + stop_tau_ns + readout_length_ns
+max_period_ns = init_length_ns + stop_dark_ns + readout_length_ns
 sync_overhead = 2
 
 # Parameters stored in output file
 params = {
     "init_length_ns": init_length_ns,
-    "dark_length_ns": dark_length_ns,
     "readout_length_ns": readout_length_ns,
     "meas_length_ns": meas_length_ns,
     "ref_length_ns": ref_length_ns,
     "drive_freq": drive_freq,
-    "start_tau_ns": start_tau_ns,
-    "stop_tau_ns": stop_tau_ns,
+    "start_tau_ns": start_dark_ns,
+    "stop_tau_ns": stop_dark_ns,
     "n_sweep": n_sweep,
     "n_meas": n_meas,
 }
@@ -60,21 +57,20 @@ print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
 init_length = init_length_ns * AWG_SAMPLE_RATE / 1e9
-dark_length = dark_length_ns * AWG_SAMPLE_RATE / 1e9
 readout_length = readout_length_ns * AWG_SAMPLE_RATE / 1e9
 meas_length = meas_length_ns * AWG_SAMPLE_RATE / 1e9
 ref_length = ref_length_ns * AWG_SAMPLE_RATE / 1e9
 
-tau_incr_ns = (stop_tau_ns - start_tau_ns) / (n_sweep - 1)
+dark_incr_ns = (stop_dark_ns - start_dark_ns) / (n_sweep - 1)
 
-start_tau = start_tau_ns * AWG_SAMPLE_RATE / 1e9
-tau_incr = tau_incr_ns * AWG_SAMPLE_RATE / 1e9
+start_dark = start_dark_ns * AWG_SAMPLE_RATE / 1e9
+dark_incr = dark_incr_ns * AWG_SAMPLE_RATE / 1e9
 
-if tau_incr != round(tau_incr):
-    print(f"Tau sweep increment should be an integer! Currently: {tau_incr}")
+if dark_incr != round(dark_incr):
+    print(f"Dark sweep increment should be an integer! Currently: {dark_incr}")
     exit()
 
-tau_ns = np.linspace(start_tau_ns, stop_tau_ns, n_sweep)
+dark_ns = np.linspace(start_dark_ns, stop_dark_ns, n_sweep)
 
 center_freq = 2.8e9
 
@@ -102,17 +98,11 @@ awg_mw.configure_channel(
 awg_mw.synchronization.enable(1)
 
 awg_mw.configure_sine_generation(
-    enable=False,
-    osc_index=osc,
-    osc_frequency=drive_freq - center_freq,
-    phase=0
+    enable=False
 )
 
 awg_mw.configure_pulse_modulation(
-    enable=True,
-    osc_index=osc,
-    osc_frequency=drive_freq - center_freq,
-    phase=0
+    enable=False
 )
 
 awg_mw.awg.configure_marker_and_trigger(
@@ -153,15 +143,14 @@ tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
 cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, TT_MARKER_CHANNEL, -TT_MARKER_CHANNEL, 2 * n_sweep * n_meas)
 
 # - Microwave sequence and CT
-mw_sequence = load_sequence("../awg_sequences/rabi_sweep/mw.c")
+mw_sequence = load_sequence("../awg_sequences/t1_measurement/mw.c")
 mw_sequence.constants = {
     'INIT_LENGTH': init_length,
-    'DARK_LENGTH': dark_length,
     'READOUT_LENGTH': readout_length,
     'MEAS_LENGTH': meas_length,
     'REF_LENGTH': ref_length,
-    'START_TAU': start_tau,
-    'TAU_INCR': tau_incr,
+    'START_DARK': start_dark,
+    'DARK_INCR': dark_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
 }
@@ -179,19 +168,15 @@ mw_ct.table[0].waveform.index = 0
 # Entry 1: play waveform 1
 mw_ct.table[1].waveform.index = 1
 
-# Entry 2: play waveform 2
-mw_ct.table[2].waveform.index = 2
-
 awg_mw.awg.commandtable.upload_to_device(mw_ct)
 
 # - Laser sequence and CT
-laser_sequence = load_sequence("../awg_sequences/rabi_sweep/laser.c")
+laser_sequence = load_sequence("../awg_sequences/t1_measurement/laser.c")
 laser_sequence.constants = {
     'INIT_LENGTH': init_length,
-    'DARK_LENGTH': dark_length,
     'READOUT_LENGTH': readout_length,
-    'START_TAU': start_tau,
-    'TAU_INCR': tau_incr,
+    'START_DARK': start_dark,
+    'DARK_INCR': dark_incr,
     'N_SWEEP': n_sweep,
     'N_MEAS': n_meas
 }
@@ -208,9 +193,6 @@ laser_ct.table[0].waveform.index = 0
 
 # Entry 1: play waveform 1
 laser_ct.table[1].waveform.index = 1
-
-# Entry 2: play waveform 2
-laser_ct.table[2].waveform.index = 2
 
 awg_laser.awg.commandtable.upload_to_device(laser_ct)
 
@@ -235,7 +217,7 @@ while not cbm.ready():
 counts = cbm.getData()
 counts = np.array(counts)
 counts = counts.reshape((n_sweep, n_meas, 2))
-np.savez(f'../data/rabi_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
+np.savez(f'../data/t1_measurement/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
 print(counts)
 
@@ -247,6 +229,6 @@ mean_meas_counts = np.mean(meas_counts, axis=1)
 
 mean_counts_norm = (mean_ref_counts - mean_meas_counts) / mean_ref_counts
 
-plt.plot(tau_ns / 1e3, mean_counts_norm)
+plt.plot(dark_ns / 1e3, mean_counts_norm)
 plt.xlabel('tau (us)')
 plt.show()
