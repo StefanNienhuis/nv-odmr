@@ -5,6 +5,7 @@ from zhinst.toolkit import Session, CommandTable
 from TimeTagger import createTimeTaggerNetwork, CountBetweenMarkers
 import pycobolt
 from util.load_sequence import load_sequence
+from tqdm import tqdm
 
 # Device parameters
 AWG_SERVER_HOST = 'localhost'
@@ -17,7 +18,7 @@ TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 LASER_SN = '31977'
-LASER_CURRENT = 55
+LASER_CURRENT = 57
 
 # Arbitrary Waveform Generator initialization
 awg_session = Session(AWG_SERVER_HOST, AWG_SERVER_PORT)
@@ -81,6 +82,7 @@ def perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_
         enable=True,
         osc_index=osc,
         osc_frequency=relative_start_freq,
+        global_amp=1,
         phase=0
     )
 
@@ -137,6 +139,11 @@ def perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_
     tt.sync()
 
     awg_channel.awg.enable_sequencer(single=True)
+    
+    steps = n_sweep if n_sweep > 1 else n_meas
+    for _ in tqdm(range(steps)):
+        time.sleep(expected_duration / steps)
+    
     awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 
     while not cbm.ready():

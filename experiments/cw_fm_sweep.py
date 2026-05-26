@@ -20,7 +20,7 @@ TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 LASER_SN = '31977'
-LASER_CURRENT = 55
+LASER_CURRENT = 57
 
 # Parameters
 modulation_freq = 5      # FM modulation frequency

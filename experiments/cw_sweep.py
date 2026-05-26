@@ -6,6 +6,7 @@ from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
 import pycobolt
 from util.load_sequence import load_sequence
+from tqdm import tqdm
 
 start_date = datetime.now()
 
@@ -20,7 +21,7 @@ TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 LASER_SN = '31977'
-LASER_CURRENT = 55
+LASER_CURRENT = 57
 
 # Parameters
 pulse_length_ns = 100e6      # Pulse duration (ns)
@@ -87,6 +88,7 @@ awg_channel.configure_pulse_modulation(
     enable=True,
     osc_index=osc,
     osc_frequency=relative_start_freq,
+    global_amp=1,
     phase=0
 )
 
@@ -149,6 +151,10 @@ cbm.start()
 tt.sync()
 
 awg_channel.awg.enable_sequencer(single=True)
+
+for _ in tqdm(range(n_sweep)):
+    time.sleep(expected_duration / n_sweep)
+
 awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 
 while not cbm.ready():
@@ -158,8 +164,15 @@ counts = cbm.getData()
 counts = np.array(counts)
 np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 
+# Enable constant sine generation after experiment to keep the system stable
+awg_channel.configure_sine_generation(
+    enable=True,
+    osc_index=osc,
+    osc_frequency=relative_start_freq,
+    phase=0
+)
+
 print(counts)
-print(cbm.getBinWidths())
 
 counts_norm = counts / np.max(counts)
 

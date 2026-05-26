@@ -10,11 +10,11 @@ n_sweep         = 401
 
 freqs = np.linspace(start_freq, stop_freq, n_sweep)
 detuning = freqs - center_freq
-results = np.load('../data/cw_sweep/2026-05-11T16.30.52.401103.npy.npz')
+results = np.load('../data/cw_sweep/2026-05-26T14.25.58.871346.npz')
 
 counts = results['data']
 counts = counts / np.max(counts)
-
+print(counts)
 curve, params = fit_curve(detuning, counts)
 fit = curve(detuning, *params)
 
@@ -27,6 +27,9 @@ max_slope_detuning = detuning[np.argmax(np.abs(slope))]
 
 print(f"Max dip at {max_dip_detuning/1e9} MHz")
 print(f"Max slope at {max_slope_detuning/1e9} MHz")
+
+plt.plot(freqs, counts)
+plt.show()
 
 plt.plot(detuning / 1e6, counts, 'x', color='gray', label='Data')
 plt.plot(detuning / 1e6, fit, color='red', label='Fit')

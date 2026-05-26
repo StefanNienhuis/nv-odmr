@@ -20,10 +20,10 @@ assignWaveIndex(1, 2, dark, 1);
 assignWaveIndex(1, 2, meas, 2);
 
 var i;
-for (i = 0; i < N_SWEEP; i++) {
-    var tau = START_TAU + (i * TAU_INCR);
+repeat (N_MEAS) {
+    for (i = 0; i < N_SWEEP; i++) {
+        var tau = START_TAU + (i * TAU_INCR);
 
-    repeat (N_MEAS) {
         waitDigTrigger(1);
 
         // Init
@@ -37,6 +37,7 @@ for (i = 0; i < N_SWEEP; i++) {
 
         // Measure
         executeTableEntry(2);
+
         waitWave();
     }
 }

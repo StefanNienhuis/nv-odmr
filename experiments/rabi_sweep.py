@@ -1,10 +1,12 @@
 import time
+import math
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
 import pycobolt
+from tqdm import tqdm
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -21,25 +23,27 @@ TT_CLICK_CHANNEL = 1
 TT_MARKER_CHANNEL = 2
 
 LASER_SN = '31977'
-LASER_CURRENT = 55
+LASER_CURRENT = 106
 
 # Largely based on: https://iopscience.iop.org/article/10.1088/1367-2630/ad20b0
 init_length_ns = 2e3
 dark_length_ns = 400
 readout_length_ns = 2e3 + 8 # Must be different from init length - AWG doesn't work otherwise
 meas_length_ns = 250
-ref_length_ns = 250
-drive_freq = 2.8664e9
+ref_length_ns = 500
+drive_freq = 2.8748e9
 osc = 0
 
-start_tau_ns = 0e3
-stop_tau_ns = 2e3
-n_sweep = 126
-n_meas = 50000
+start_tau_ns = 8
+stop_tau_ns = 1024
+n_sweep = 128
+n_meas = int(1e6)
+
+assert readout_length_ns < init_length_ns + dark_length_ns + stop_tau_ns
 
 # Synchronization is done by sending internal trigger periodically. Max period is used, with some margin for safety.
 max_period_ns = init_length_ns + dark_length_ns + stop_tau_ns + readout_length_ns
-sync_overhead = 2
+sync_overhead = 1.1
 
 # Parameters stored in output file
 params = {
@@ -55,7 +59,7 @@ params = {
     "n_meas": n_meas,
 }
 
-expected_duration = n_sweep * n_meas * max_period_ns * sync_overhead / 1e9
+expected_duration = math.ceil(n_sweep * n_meas * max_period_ns * sync_overhead / 1e9)
 print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
@@ -113,6 +117,7 @@ awg_mw.configure_pulse_modulation(
     enable=True,
     osc_index=osc,
     osc_frequency=drive_freq - center_freq,
+    global_amp=1,
     phase=0
 )
 
@@ -228,10 +233,29 @@ tt.sync()
 awg_device.system.internaltrigger.enable(1)
 awg_mw.awg.enable_sequencer(single=True)
 awg_laser.awg.enable_sequencer(single=True)
-awg_mw.awg.wait_done(timeout=expected_duration*15)
+
+with tqdm(total=100) as pbar:
+    progress = 0
+    while progress < 100:
+        time.sleep(1)
+        progress = awg_device.system.internaltrigger.progress()
+        progress = round(progress * 100, 1)
+        pbar.update(progress - pbar.n)
+        
+
+awg_mw.awg.wait_done(timeout=50)
 
 while not cbm.ready():
     time.sleep(0.2)
+
+
+# Enable constant sine generation after experiment to keep the system stable
+awg_mw.configure_sine_generation(
+    enable=True,
+    osc_index=osc,
+    osc_frequency=2.86e9 - center_freq,
+    phase=0
+)
 
 counts = cbm.getData()
 counts = np.array(counts)
@@ -249,6 +273,12 @@ total_meas_counts = np.sum(meas_counts, axis=1)
 total_ref_counts = np.sum(ref_counts, axis=1)
 
 total_counts_norm = (total_ref_counts - total_meas_counts) / total_ref_counts
+
+plt.plot(tau_ns / 1e3, total_ref_counts / (ref_length_ns / meas_length_ns), label='Ref')
+plt.plot(tau_ns / 1e3, total_meas_counts, label='Meas')
+plt.xlabel('tau (us)')
+plt.legend()
+plt.show()
 
 plt.plot(tau_ns / 1e3, total_counts_norm)
 plt.xlabel('tau (us)')

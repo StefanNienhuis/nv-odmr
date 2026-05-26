@@ -11,7 +11,7 @@ n_sweep         = 201
 freqs = np.linspace(start_freq, stop_freq, n_sweep)
 detuning = freqs - center_freq
 
-results = np.load('../data/cw_am_sweep/2026-05-12T11.06.53.528274.npz')
+results = np.load('../data/cw_am_sweep/2026-05-26T15.38.34.807587.npz')
 counts = results['data']
 
 active_counts = counts[:,:,0]
