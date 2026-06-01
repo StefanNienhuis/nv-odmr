@@ -7,12 +7,12 @@ from util import cw_am
 start_date = datetime.now()
 
 # Parameters
-modulation_freq = 5      # AM modulation frequency (Hz)
+modulation_freq = 10e3      # AM modulation frequency (Hz)
 meas_delay_ns   = 20e3     # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
-start_freq      = 2.85e9   # Sweep start frequency (Hz)
-stop_freq       = 2.89e9   # Sweep stop frequency (Hz)
-n_sweep         = 201      # Number of sweep steps
+start_freq      = 2.855e9   # Sweep start frequency (Hz)
+stop_freq       = 2.885e9   # Sweep stop frequency (Hz)
+n_sweep         = 101      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
 
 n_meas = meas_time * modulation_freq

@@ -23,9 +23,10 @@ wave l = zeros(BIN_LENGTH);
 
 wave m1 = marker(16, 1);
 wave m2 = marker(BIN_LENGTH - 16, 0);
+wave m = join(m1, m2);
 
-assignWaveIndex(1, 2, h, 0);
-assignWaveIndex(1, 2, l, 0);
+assignWaveIndex(1, 2, h + m, 0);
+assignWaveIndex(1, 2, l + m, 1);
 
 configFreqSweep(OSC, START_FREQ, FREQ_INCR);
 
@@ -45,7 +46,7 @@ for (i = 0; i < N_SWEEP; i++) {
         }
     }
 
-    waitWave()
+    waitWave();
 }
 
 // Finish off with marker reset for TT

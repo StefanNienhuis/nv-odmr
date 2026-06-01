@@ -14,7 +14,7 @@ ref[:T//2] = 1
 
 # Simulate PL: 1 - ref * 0.3 + (noise)
 sig_base = np.tile(ref, N)
-sig = 1 - (np.roll(sig_base, shift) * 0.05) + (np.random.randn(len(sig_base)) * 0.1)
+sig = 1 - (np.roll(sig_base, shift) * 0.15) + (np.random.randn(len(sig_base)) * 0.1)
 
 sig = np.reshape(sig, (N, T))
 
@@ -52,7 +52,7 @@ sig_summed = np.sum(sig, axis=0)
 R, det_shift = lockin(sig_summed, ref)
 print(R, shift, det_shift)
 
-sig_unshifted = np.roll(sig, -shift, axis=1)
+sig_unshifted = np.roll(sig, -round(shift), axis=1)
 
 active_counts = np.sum(sig_unshifted[:, :T//2], axis=1)
 inactive_counts = np.sum(sig_unshifted[:, T//2:], axis=1)

@@ -32,7 +32,7 @@ awg_channel = awg_device.sgchannels[AWG_CHANNEL]
 
 awg_channel.synchronization.enable(0)
 
-center_freq = 600e6
+center_freq = 2.8e9
     
 awg_channel.configure_channel(
     enable=True,
@@ -58,13 +58,75 @@ def round_frequency(frequency):
     pulse_ns = period_ns / 2
     pulse_length = pulse_ns * AWG_SAMPLE_RATE / 1e9
 
-    rounded_pulse_length = int(np.round(pulse_length / bin_length)) * bin_length
+    rounded_pulse_length = int(np.round(pulse_length / bin_length) * bin_length)
 
     rounded_pulse_ns = rounded_pulse_length * 1e9 / AWG_SAMPLE_RATE
     rounded_period_ns = rounded_pulse_ns * 2
     rounded_frequency = 1e9 / rounded_period_ns
 
     return rounded_frequency
+
+def lockin(sig, ref):
+    assert len(sig) == len(ref)
+
+    theta = np.linspace(0, 2 * np.pi, len(sig))
+
+    # Normalize signals
+    s = sig - np.mean(sig)
+    r = ref - np.mean(ref)
+
+    # Invert signal since MW high means PL low
+    s = -s
+
+    Xs = np.sum(s * np.cos(theta))
+    Ys = np.sum(s * np.sin(theta))
+
+    phi_s = np.arctan2(Ys, Xs)
+
+    Xr = np.sum(r * np.cos(theta))
+    Yr = np.sum(r * np.sin(theta))
+
+    phi_r = np.arctan2(Yr, Xr)
+
+    d_phi = phi_s - phi_r
+    d_phi = d_phi % (2 * np.pi)
+
+    R = np.sqrt(Xs**2 + Ys**2)
+    shift = d_phi / (2 * np.pi) * len(sig)
+
+    return R, shift
+
+def lockin(sig, ref):
+    assert len(sig) == len(ref)
+
+    theta = np.linspace(0, 2 * np.pi, len(sig))
+
+    # Normalize signals
+    s = sig - np.mean(sig)
+    r = ref - np.mean(ref)
+
+    # Invert signal since MW high means PL low
+    s = -s
+
+    Xs = np.sum(s * np.cos(theta))
+    Ys = np.sum(s * np.sin(theta))
+
+    phi_s = np.arctan2(Ys, Xs)
+
+    Xr = np.sum(r * np.cos(theta))
+    Yr = np.sum(r * np.sin(theta))
+
+    phi_r = np.arctan2(Yr, Xr)
+
+    d_phi = phi_s - phi_r
+    d_phi = d_phi % (2 * np.pi)
+    
+    print(phi_s, phi_r)
+
+    R = np.sqrt(Xs**2 + Ys**2)
+    shift = d_phi / (2 * np.pi) * len(sig)
+
+    return R, shift
 
 def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
     # Calculate pulse length from modulation frequency
@@ -117,6 +179,8 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
         'N_SWEEP': n_sweep,
         'N_MEAS': n_meas
     }
+    
+    print(sequence.constants)
 
     awg_channel.awg.load_sequencer_program(sequence)
     awg_channel.awg.wait_done()
@@ -154,6 +218,27 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
 
     counts = cbm.getData()
     counts = np.array(counts)
-    counts = counts.reshape((n_sweep, n_meas, 2, n_bins))
+    counts = counts.reshape((n_sweep, n_meas, 2 * n_bins))
     
-    return freq, counts
+    ref = np.zeros(2 * n_bins)
+    ref[0:n_bins//2] = 1
+    
+    am_signals = np.zeros(n_sweep)
+    
+    for i in range(n_sweep):
+        summed_period = np.sum(counts[i], axis=0)
+        R, shift = lockin(summed_period, ref)
+        
+        sig_unshifted = np.roll(counts[i], -round(shift), axis=1)
+
+        active_counts = np.sum(sig_unshifted[:, :n_bins], axis=1)
+        inactive_counts = np.sum(sig_unshifted[:, n_bins:], axis=1)
+
+        mask = inactive_counts != 0
+
+        am_signal = (np.mean(inactive_counts) - np.mean(active_counts)) / np.mean(inactive_counts) #(inactive_counts[mask] - active_counts[mask]) / inactive_counts[mask]
+        mean_am_signal = np.mean(am_signal)
+        am_signals[i] = mean_am_signal
+    
+    return freq, am_signals
+

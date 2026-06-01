@@ -14,7 +14,7 @@ n_sweep         = 101      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
 
 modulation_freqs = np.round(np.logspace(0, 5, 20))
-# modulation_freqs = np.round(np.logspace(1, 2, 2)).astype(int)
+#modulation_freqs = np.round(np.logspace(1, 2, 2)).astype(int)
 
 # Parameters stored in output file
 params = {
