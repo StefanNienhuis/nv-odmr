@@ -65,4 +65,4 @@ def simulate_cw(Bz, Amw, f_mw):
     H = [H0, [H_drive, Amw]]
 
     solution = qt.mesolve(H, psi0, tlist, c_ops, e_ops=[p_zero])
-    return solution.expect[0][-1]
+    return solution.expect[0][-1] + np.random.randn(1)[0] * 0.0025
