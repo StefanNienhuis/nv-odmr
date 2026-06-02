@@ -26,13 +26,26 @@ am_results = off_results - on_results
 
 if __name__ == '__main__':
     # Plot
-    plt.figure()
-    plt.plot(freqs / 1e9, am_results)
-    plt.xlabel("Microwave frequency (GHz)")
-    plt.ylabel("Normalized fluorescence")
-    plt.title(f"Simulated AM CW-ODMR frequency sweep (B = {Bz*1e6} $\\mu$T)")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.suptitle(f"Simulated AM CW-ODMR frequency sweep (B = {Bz * 1e6} $\\mu$T)")
+    fig.set_figwidth(10.8)
+    fig.set_figheight(4.8)
+    # plt.figure(figsize=(10.8, 4.8))
+
+    ax1.plot(freqs / 1e9, on_results, label="MW on")
+    ax1.plot(freqs / 1e9, off_results, label="MW off")
+    ax1.set_xlabel("Microwave frequency (GHz)")
+    ax1.set_ylabel("Fluorescence (a.u)")
+    ax1.legend()
+    ax1.grid(True)
+
+    ax2.plot(freqs / 1e9, am_results, label="AM signal")
+    ax2.set_xlabel("Microwave frequency (GHz)")
+    ax2.set_ylabel("Relative fluorescence")
+    ax2.legend()
+    ax2.grid(True)
+
+    fig.tight_layout()
+    fig.show()
 
     print(f"Peak frequency: {freqs[np.argmax(am_results)]}")
