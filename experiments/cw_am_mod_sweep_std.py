@@ -56,7 +56,7 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
 
 np.savez(f'../data/cw_am_mod_sweep_std/{start_date.isoformat().replace(":", ".")}.npz', data=am_counts_per_modulation_freq, params=params)
 
-std_per_modulation_freq = [np.std(counts) for counts in am_counts_per_modulation_freq]
+std_per_modulation_freq = [np.std(counts, ddof=1) for counts in am_counts_per_modulation_freq]
 
 plt.semilogx(modulation_freqs, std_per_modulation_freq)
 plt.legend()

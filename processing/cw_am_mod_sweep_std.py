@@ -20,7 +20,7 @@ for freq, slope, counts in zip(modulation_freqs, slopes_per_freq, counts_per_mod
     mask = inactive_counts != 0
     S = (inactive_counts[mask] - active_counts[mask]) / inactive_counts[mask]
     
-    std_S = np.std(S)
+    std_S = np.std(S, ddof=1)
     
     std_f = std_S / slope
     std_B = std_f / gamma_nv
