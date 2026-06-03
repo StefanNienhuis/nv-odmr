@@ -6,6 +6,7 @@ from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
 import pycobolt
 from util.load_sequence import load_sequence
+from util import cw
 from tqdm import tqdm
 
 start_date = datetime.now()
@@ -46,133 +47,8 @@ expected_duration = n_sweep * n_meas * pulse_length_ns / 1e9
 print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
-# Convert ns -> samples
-pulse_length = pulse_length_ns * AWG_SAMPLE_RATE / 1e9
-meas_delay = meas_delay_ns * AWG_SAMPLE_RATE / 1e9
-
-# Round counts to 16 - AWG zero pads otherwise
-pulse_length = int(round(pulse_length / 16) * 16)
-meas_delay = int(round(meas_delay / 16) * 16)
-
-center_freq = 2.8e9
-relative_start_freq = start_freq - center_freq
-
-freq = np.linspace(start_freq, stop_freq, n_sweep)
-freq_incr = (stop_freq - start_freq) / (n_sweep - 1)
-
-# Arbitrary Waveform Generator initialization
-awg_session = Session(AWG_SERVER_HOST, AWG_SERVER_PORT)
-awg_device = awg_session.connect_device(AWG_DEVICE)
-
-awg_device.check_compatibility()
-
-awg_channel = awg_device.sgchannels[AWG_CHANNEL]
-
-awg_channel.synchronization.enable(0)
-
-awg_channel.configure_channel(
-    enable=True,
-    output_range=10,
-    center_frequency=center_freq,
-    rf_path=True
-)
-
-awg_channel.configure_sine_generation(
-    enable=False,
-    osc_index=osc,
-    osc_frequency=relative_start_freq,
-    phase=0
-)
-
-awg_channel.configure_pulse_modulation(
-    enable=True,
-    osc_index=osc,
-    osc_frequency=relative_start_freq,
-    global_amp=1,
-    phase=0
-)
-
-awg_channel.awg.configure_marker_and_trigger(
-    trigger_in_source='trigin0',
-    trigger_in_slope='rising_edge',
-    marker_out_source='output0_marker0'
-)
-
-# Time Tagger initialization
-tt = createTimeTaggerNetwork('localhost:41101')
-
-tt.setTriggerLevel(TT_CLICK_CHANNEL, 0.25)
-tt.setTriggerLevel(TT_MARKER_CHANNEL, 0.5)
-
-# Marker channel is inverted
-cbm = CountBetweenMarkers(tt, TT_CLICK_CHANNEL, -TT_MARKER_CHANNEL, TT_MARKER_CHANNEL, n_sweep)
-
-# Load AWG sequence
-sequence = load_sequence("../awg_sequences/cw_sweep.c")
-sequence.constants = {
-    'PULSE_LENGTH': pulse_length,
-    'MEAS_DELAY': meas_delay,
-    'OSC': osc,
-    'START_FREQ': relative_start_freq,
-    'FREQ_INCR': freq_incr,
-    'N_SWEEP': n_sweep,
-    'N_MEAS': n_meas
-}
-
-awg_channel.awg.load_sequencer_program(sequence)
-awg_channel.awg.wait_done()
-
-# Load command table
-# Command table used since it's more efficient than playWave
-# https://docs.zhinst.com/shfsg_user_manual/tutorials/tutorial_command_table.html#introduction-to-the-command-table
-ct_schema = awg_channel.awg.commandtable.load_validation_schema()
-ct = CommandTable(ct_schema)
-
-# Entry 0: play waveform 0
-ct.table[0].waveform.index = 0
-
-# Entry 1: play waveform 1
-ct.table[1].waveform.index = 1
-
-# Entry 2: hold for remaining time
-ct.table[2].waveform.playHold = True
-ct.table[2].waveform.length = pulse_length - 1024
-
-awg_channel.awg.commandtable.upload_to_device(ct)
-
-# Laser setup
-laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
-laser.constant_current()
-laser.set_current(LASER_CURRENT)
-print(f"Laser mode: {laser.get_mode()}")
-
-# Start time tagger and AWG sequence
-cbm.start()
-tt.sync()
-
-awg_channel.awg.enable_sequencer(single=True)
-
-for _ in tqdm(range(n_sweep)):
-    time.sleep(expected_duration / n_sweep)
-
-awg_channel.awg.wait_done(timeout=expected_duration*1.5)
-
-while not cbm.ready():
-    time.sleep(0.2)
-
-counts = cbm.getData()
-counts = np.array(counts)
+freq, counts = cw.perform_sweep(pulse_length_ns, meas_delay_ns, osc, start_freq, stop_freq, n_sweep, n_meas)
 np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
-
-# Enable constant sine generation after experiment to keep the system stable
-awg_channel.configure_sine_generation(
-    enable=True,
-    osc_index=osc,
-    osc_frequency=relative_start_freq,
-    phase=0
-)
-
-print(counts)
 
 counts_norm = counts / np.max(counts)
 
