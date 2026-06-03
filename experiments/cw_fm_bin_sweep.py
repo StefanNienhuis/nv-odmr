@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-from util import cw_fm_bin
+from util import cw_fm_bin, set_mw
 
 start_date = datetime.now()
 
@@ -39,6 +39,8 @@ print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
 freq, fm_signals = cw_fm_bin.perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas)
+
+set_mw.set_steady()
 
 np.savez(f'../data/cw_fm_bin_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=fm_signals, params=params)
     

@@ -8,7 +8,7 @@ print(counts)
 params = results['params'].item()
 
 slope = params['slope']
-meas_time = 1#params['meas_time']
+meas_time = params['pulse_length_ns'] * params['n_meas'] / 1e9
 
 gamma_nv = 28.0e9
 

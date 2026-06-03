@@ -7,6 +7,8 @@ from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
 import pycobolt
 from tqdm import tqdm
+
+from util import set_mw
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -248,14 +250,7 @@ awg_mw.awg.wait_done(timeout=50)
 while not cbm.ready():
     time.sleep(0.2)
 
-
-# Enable constant sine generation after experiment to keep the system stable
-awg_mw.configure_sine_generation(
-    enable=True,
-    osc_index=osc,
-    osc_frequency=2.86e9 - center_freq,
-    phase=0
-)
+set_mw.set_steady()
 
 counts = cbm.getData()
 counts = np.array(counts)

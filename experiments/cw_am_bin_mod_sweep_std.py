@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 
-from util import cw_am_bin
+from util import cw_am_bin, set_mw
 
 start_date = datetime.now()
 
@@ -47,6 +47,8 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
         am_counts.append(sweep_am_counts[0])
 
     am_counts_per_modulation_freq.append(np.array(am_counts))
+
+set_mw.set_steady()
 
 np.savez(f'../data/cw_am_bin_mod_sweep_std/{start_date.isoformat().replace(":", ".")}.npz', data=am_counts_per_modulation_freq, params=params)
 

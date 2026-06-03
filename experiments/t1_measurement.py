@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork
 import pycobolt
+
+from util import set_mw
 from util.load_sequence import load_sequence
 
 start_date = datetime.now()
@@ -214,6 +216,8 @@ awg_mw.awg.wait_done(timeout=expected_duration*15)
 
 while not cbm.ready():
     time.sleep(0.2)
+
+set_mw.set_steady()
 
 counts = cbm.getData()
 counts = np.array(counts)

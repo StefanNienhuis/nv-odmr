@@ -48,6 +48,7 @@ print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
 freq, counts = cw.perform_sweep(pulse_length_ns, meas_delay_ns, osc, start_freq, stop_freq, n_sweep, n_meas)
+
 set_mw.set_steady()
 
 np.savez(f'../data/cw_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)

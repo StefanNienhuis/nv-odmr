@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-from util import cw_fm
+from util import cw_fm, set_mw
 
 start_date = datetime.now()
 
@@ -59,6 +59,8 @@ for i, modulation_freq in enumerate(modulation_freqs):
     fm_counts_per_modulation_freq.append(fm_counts)
     
     plt.plot(freq, fm_counts, label=f'{modulation_freq} Hz')
+
+set_mw.set_steady()
 
 fm_counts_per_modulation_freq = np.array(fm_counts_per_modulation_freq)
 np.savez(f'../data/cw_fm_mod_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=fm_counts_per_modulation_freq, params=params)

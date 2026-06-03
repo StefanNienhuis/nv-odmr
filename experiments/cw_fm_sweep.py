@@ -6,7 +6,7 @@ from zhinst.toolkit import Session, CommandTable
 from TimeTagger import createTimeTaggerNetwork, CountBetweenMarkers
 import pycobolt
 from util.load_sequence import load_sequence
-from util import cw_fm
+from util import cw_fm, set_mw
 
 start_date = datetime.now()
 
@@ -59,6 +59,8 @@ print(f"Expected duration: {expected_duration}s")
 print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).time()}")
 
 freq, counts = cw_fm.perform_sweep(modulation_freq, freq_dev, meas_delay_ns, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas)
+
+set_mw.set_steady()
 
 np.savez(f'../data/cw_fm_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
 

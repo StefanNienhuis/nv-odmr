@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from zhinst.toolkit import Session, CommandTable
 from TimeTagger import CountBetweenMarkers, createTimeTaggerNetwork, CHANNEL_UNUSED
 import pycobolt
-from util import cw
+from util import cw, set_mw
 
 start_date = datetime.now()
 
@@ -26,6 +26,7 @@ params = {
     "pulse_length_ns": pulse_length_ns,
     "meas_delay_ns": meas_delay_ns,
     "drive_freq": drive_freq,
+    "n_meas": n_meas,
     "n_std": n_std,
     # Included for further processing
     "slope": slope,
@@ -45,6 +46,8 @@ for n in range(n_std):
     mean_counts = mean_counts / normalizer
 
     counts.append(mean_counts)
+
+set_mw.set_steady()
 
 counts = np.array(counts)
 np.savez(f'../data/cw_std/{start_date.isoformat().replace(":", ".")}.npz', data=counts, params=params)
