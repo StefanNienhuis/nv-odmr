@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from util.sensitivity import calculate_sensitivity
 
-results = np.load('../data', allow_pickle=True)
+results = np.load('../data/cw_fm_mod_sweep_std/2026-06-03T18.36.15.131925.npz', allow_pickle=True)
 counts_per_modulation_freq = results['data']
 
 params = results['params'].item()
