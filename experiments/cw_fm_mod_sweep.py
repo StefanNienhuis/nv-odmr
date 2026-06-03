@@ -1,25 +1,30 @@
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
-from util import cw_am_bin
+from util import cw_fm
 
 start_date = datetime.now()
 
 # Parameters
-osc             = 0        # Oscillator being swept
+meas_delay_ns   = 1e3      # Delay before measuring (ns)
+osc1            = 0        # First oscillator being swept
+osc2            = 1        # Second oscillator being swept
 start_freq      = 2.85e9   # Sweep start frequency (Hz)
 stop_freq       = 2.89e9   # Sweep stop frequency (Hz)
+mod_depth       = 3e6      # FM modulation depth (Hz)
 n_sweep         = 101      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
 
-modulation_freqs = np.logspace(0, 5, 20)
-modulation_freqs = cw_am_bin.round_frequency(modulation_freqs)
+modulation_freqs = np.round(np.logspace(0, 5, 20))
+#modulation_freqs = np.round(np.logspace(1, 2, 2)).astype(int)
 
 # Parameters stored in output file
 params = {
     "modulation_freqs": modulation_freqs,
+    "meas_delay_ns": meas_delay_ns,
     "start_freq": start_freq,
     "stop_freq": stop_freq,
+    "mod_depth": mod_depth,
     "n_sweep": n_sweep,
     "meas_time": meas_time,
 }
@@ -39,14 +44,22 @@ for i, modulation_freq in enumerate(modulation_freqs):
     if n_meas != round(n_meas):
         print(f"Warning: number of measurements is rounded: {n_meas} instead of {modulation_freq * meas_time}")
     
-    freq, am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas)
-    counts_per_modulation_freq.append(am_counts)
+    freq, sweep_counts = cw_fm.perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_sweep, n_meas)
+    counts_per_modulation_freq.append(sweep_counts)
     
-    plt.plot(freq, am_counts, label=f'{modulation_freq} Hz')
+    low_counts = sweep_counts[:, :, 0]
+    high_counts = sweep_counts[:, :, 1]
+
+    mean_low_counts = np.mean(low_counts, axis=1)
+    mean_high_counts = np.mean(high_counts, axis=1)
+
+    fm_counts = (mean_high_counts - mean_low_counts) / (mean_high_counts + mean_low_counts)
+    
+    plt.plot(freq, fm_counts, label=f'{modulation_freq} Hz')
 
 save_array = np.empty(len(counts_per_modulation_freq), object)
 save_array[:] = counts_per_modulation_freq
-np.savez(f'../data/cw_am_bin_mod_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=save_array, params=params)
+np.savez(f'../data/cw_fm_mod_sweep/{start_date.isoformat().replace(":", ".")}.npz', data=save_array, params=params)
 
 plt.legend()
 plt.show()

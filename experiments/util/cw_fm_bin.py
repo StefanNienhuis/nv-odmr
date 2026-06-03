@@ -98,7 +98,7 @@ def lockin(sig, ref):
 
     return R, shift
 
-def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
+def perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas):
     # Calculate pulse length from modulation frequency
     period_ns = 1e9 / modulation_freq
     pulse_length_ns = period_ns / 2
@@ -119,16 +119,29 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
     # AWG channel configuration
     awg_channel.configure_sine_generation(
         enable=False,
-        osc_index=osc,
-        osc_frequency=relative_start_freq,
+        osc_index=osc1,
+        osc_frequency=relative_start_freq - freq_dev,
         phase=0
     )
 
     awg_channel.configure_pulse_modulation(
         enable=True,
-        osc_index=osc,
-        osc_frequency=relative_start_freq,
-        global_amp=1,
+        osc_index=osc1,
+        osc_frequency=relative_start_freq - freq_dev,
+        phase=0
+    )
+
+    awg_channel.configure_sine_generation(
+        enable=False,
+        osc_index=osc2,
+        osc_frequency=relative_start_freq + freq_dev,
+        phase=0
+    )
+
+    awg_channel.configure_pulse_modulation(
+        enable=True,
+        osc_index=osc2,
+        osc_frequency=relative_start_freq + freq_dev,
         phase=0
     )
 
@@ -139,12 +152,14 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
     )
 
     # Load AWG sequence
-    sequence = load_sequence("../awg_sequences/cw_am_bin_sweep.c")
+    sequence = load_sequence("../awg_sequences/cw_fm_bin_sweep.c")
     sequence.constants = {
         'BIN_LENGTH': bin_length,
         'N_BINS': n_bins,
-        'OSC': osc,
+        'OSC1': osc1,
+        'OSC2': osc2,
         'START_FREQ': relative_start_freq,
+        'FREQ_DEV': freq_dev,
         'FREQ_INCR': freq_incr,
         'N_SWEEP': n_sweep,
         'N_MEAS': n_meas
@@ -161,9 +176,11 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
 
     # Entry 0: play waveform 0
     ct.table[0].waveform.index = 0
+    ct.table[0].oscillatorSelect.value = osc1
 
     # Entry 1: play waveform 1
-    ct.table[1].waveform.index = 1
+    ct.table[1].waveform.index = 0
+    ct.table[1].oscillatorSelect.value = osc2
 
     awg_channel.awg.commandtable.upload_to_device(ct)
 
@@ -191,7 +208,7 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
     ref = np.zeros(2 * n_bins)
     ref[0:n_bins//2] = 1
     
-    am_signals = np.zeros(n_sweep)
+    fm_signals = np.zeros(n_sweep)
     
     for i in range(n_sweep):
         summed_period = np.sum(counts[i], axis=0)
@@ -199,11 +216,14 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
         
         sig_unshifted = np.roll(counts[i], -round(shift))
 
-        active_counts = np.sum(sig_unshifted[:, :n_bins], axis=1)
-        inactive_counts = np.sum(sig_unshifted[:, n_bins:], axis=1)
+        low_counts = np.sum(sig_unshifted[:, :n_bins], axis=1)
+        high_counts = np.sum(sig_unshifted[:, n_bins:], axis=1)
 
-        am_signal = (np.mean(inactive_counts) - np.mean(active_counts)) / np.mean(inactive_counts)
-        am_signals[i] = am_signal
+        mean_low_counts = np.mean(low_counts)
+        mean_high_counts = np.mean(high_counts)
+
+        fm_signal = (mean_high_counts - mean_low_counts) / (mean_high_counts + mean_low_counts)
+        fm_signals[i] = fm_signal
     
-    return freq, am_signals
+    return freq, fm_signals
 
