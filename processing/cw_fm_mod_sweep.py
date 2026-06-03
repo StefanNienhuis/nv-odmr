@@ -1,24 +1,78 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from util.double_lorentzian_fit import fit_curve
+from scipy.optimize import curve_fit
+
+from util.double_lorentzian_diff_fit import fit_curve
 
 center_freq = 2.8e9
 
-results = np.load('../data', allow_pickle=True)
+results = np.load('../data/cw_fm_mod_sweep/2026-06-03T17.19.41.042999.npz', allow_pickle=True)
 fm_counts_per_modulation_freq = results['data']
 
 params = results['params'].item()
 
 modulation_freqs = params['modulation_freqs']
+mod_depth = params['mod_depth']
 
 freqs = np.linspace(params['start_freq'], params['stop_freq'], params['n_sweep'])
 detuning = freqs - center_freq
 
 max_slopes = []
 max_slope_freqs = []
+#
+# # EXPIREMENTAL
+#
+# def cw_curve(x, b0, b1, A1, A2, x1, x2, gamma1, gamma2):
+#     return b0 + b1 * x - A1 / (1 + ((x-x1)/gamma1) ** 2) - A2 / (1 + ((x-x2)/ gamma2) ** 2)
+#
+# def curve(x, b0, b1, A1, A2, x1, x2, gamma1, gamma2):
+#     mod_depth = 3e6
+#
+#     high = cw_curve(x + mod_depth / 2, b0, b1, A1, A2, x1, x2, gamma1, gamma2)
+#     low = cw_curve(x - mod_depth / 2, b0, b1, A1, A2, x1, x2, gamma1, gamma2)
+#
+#     return (high - low) / (high + low)
+#
+# def fit_curve(freqs, fluorescence, dip=True):
+#     b0_guess = 1
+#     b1_guess = 0.0
+#
+#     A1_guess = np.max(fluorescence) - np.min(fluorescence)
+#     A2_guess = A1_guess
+#
+#     # Guess that the dips are symmetric around the center
+#     x_index_guess = np.argmin(fluorescence) if dip else np.argmax(fluorescence)
+#     x_midpoint = len(freqs) // 2
+#
+#     if x_index_guess <= x_midpoint:
+#         x1_guess = freqs[x_index_guess]
+#         x2_guess = freqs[x_midpoint + (x_midpoint - x_index_guess)]
+#     else:
+#         x1_guess = freqs[x_midpoint - (x_index_guess - x_midpoint)]
+#         x2_guess = freqs[x_index_guess]
+#
+#     # Estimate linewidth of 1/50 of the range
+#     gamma1_guess = (freqs.max() - freqs.min()) / 50
+#     gamma2_guess = gamma1_guess
+#
+#     initial_guess = [b0_guess, b1_guess, A1_guess, A2_guess, x1_guess, x2_guess, gamma1_guess, gamma2_guess]
+#
+#     params, _ = curve_fit(curve, freqs, fluorescence, p0=initial_guess)
+#
+#     return curve, params
+#
+# data = fm_counts_per_modulation_freq[6]
+#
+# qcurve, params = fit_curve(freqs, data, dip=True)
+#
+# fit = qcurve(freqs, *params)
+#
+# plt.plot(data, 'x')
+# plt.plot(fit)
+# plt.show()
 
 for i, (modulation_freq, fm_counts) in enumerate(list(zip(modulation_freqs, fm_counts_per_modulation_freq))):
-    curve, params = fit_curve(detuning, fm_counts, dip=False)
+    curve, params = fit_curve(detuning, fm_counts, mod_depth, dip=True)
     fit = curve(detuning, *params)
 
     max_peak = np.max(fit)
