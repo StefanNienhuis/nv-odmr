@@ -2,12 +2,11 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 
-from util import cw_am
+from util import cw_am_bin
 
 start_date = datetime.now()
 
 # Parameters
-meas_delay_ns   = 1e3     # Delay before measuring (ns)
 osc             = 0        # Oscillator being swept
 meas_time       = 1        # Time to measure for at each frequency
 n_std           = 50
@@ -20,7 +19,6 @@ slopes = [1.97335326469559e-08, 4.4853112745912805e-08, 2.3311749527669316e-08, 
 # Parameters stored in output file
 params = {
     "modulation_freqs": modulation_freqs,
-    "meas_delay_ns": meas_delay_ns,
     "drive_freqs": drive_freqs,
     "meas_time": meas_time,
     "slopes": slopes # included for further processing
@@ -44,17 +42,13 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
     am_counts = []
     
     for n in range(n_std):
-        freq, sweep_counts = cw_am.perform_sweep(modulation_freq, meas_delay_ns, osc, drive_freq, drive_freq, 1, n_meas)
+        freq, sweep_am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, drive_freq, drive_freq, 1, n_meas)
 
-        # Taking sweep index 0 as only one frequency is used
-        mean_active_counts = np.mean(sweep_counts[0, :, 0])
-        mean_inactive_counts = np.mean(sweep_counts[0, :, 1])
-
-        am_counts.append((mean_inactive_counts - mean_active_counts) / mean_inactive_counts)
+        am_counts.append(sweep_am_counts[0])
 
     am_counts_per_modulation_freq.append(np.array(am_counts))
 
-np.savez(f'../data/cw_am_mod_sweep_std/{start_date.isoformat().replace(":", ".")}.npz', data=am_counts_per_modulation_freq, params=params)
+np.savez(f'../data/cw_am_bin_mod_sweep_std/{start_date.isoformat().replace(":", ".")}.npz', data=am_counts_per_modulation_freq, params=params)
 
 std_per_modulation_freq = [np.std(counts) for counts in am_counts_per_modulation_freq]
 

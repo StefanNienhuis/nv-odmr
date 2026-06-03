@@ -229,14 +229,12 @@ def perform_sweep(modulation_freq, osc, start_freq, stop_freq, n_sweep, n_meas):
         summed_period = np.sum(counts[i], axis=0)
         R, shift = lockin(summed_period, ref)
         
-        sig_unshifted = np.roll(counts[i], -round(shift), axis=1)
+        sig_unshifted = np.roll(counts[i], -round(shift))
 
         active_counts = np.sum(sig_unshifted[:, :n_bins], axis=1)
         inactive_counts = np.sum(sig_unshifted[:, n_bins:], axis=1)
 
-        mask = inactive_counts != 0
-
-        am_signal = (np.mean(inactive_counts) - np.mean(active_counts)) / np.mean(inactive_counts) #(inactive_counts[mask] - active_counts[mask]) / inactive_counts[mask]
+        am_signal = (np.mean(inactive_counts) - np.mean(active_counts)) / np.mean(inactive_counts)
         mean_am_signal = np.mean(am_signal)
         am_signals[i] = mean_am_signal
     
