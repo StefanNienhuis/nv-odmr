@@ -32,7 +32,9 @@ start_freq      = 2.84e9   # Sweep start frequency (Hz)
 stop_freq       = 2.90e9   # Sweep stop frequency (Hz)
 mod_depth       = 3e6      # FM modulation depth (Hz)
 n_sweep         = 401      # Number of sweep steps
-n_meas          = 5        # Number of measurements at each frequency
+meas_time       = 1        # Time to measure for at each frequency
+
+n_meas = meas_time * modulation_freq
 
 # Parameters stored in output file
 params = {
@@ -42,7 +44,7 @@ params = {
     "stop_freq": stop_freq,
     "mod_depth": mod_depth,
     "n_sweep": n_sweep,
-    "n_meas": n_meas,
+    "meas_time": meas_time,
 }
 
 # Calculate the +- frequency deviation from modulation depth

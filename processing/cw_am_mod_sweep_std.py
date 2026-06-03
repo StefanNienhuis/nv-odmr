@@ -8,25 +8,21 @@ params = results['params'].item()
 
 modulation_freqs = params['modulation_freqs']
 slopes_per_freq = params['slopes']
+meas_time = params['meas_time']
 
 gamma_nv = 28.0e9
 
 sensitivities_per_modulation_freq = []
 
 for freq, slope, counts in zip(modulation_freqs, slopes_per_freq, counts_per_modulation_freq):
-    active_counts = counts[:, 0]
-    inactive_counts = counts[:, 1]
-    
-    mask = inactive_counts != 0
-    S = (inactive_counts[mask] - active_counts[mask]) / inactive_counts[mask]
+    S = counts_per_modulation_freq
     
     std_S = np.std(S, ddof=1)
     
     std_f = std_S / slope
     std_B = std_f / gamma_nv
-    
-    tau = 1 / freq
-    sensitivity = std_B * np.sqrt(tau)
+
+    sensitivity = std_B * np.sqrt(meas_time)
     print(f"{freq}:\t\t{sensitivity*1e6} uT/sqrt(Hz)")
     sensitivities_per_modulation_freq.append(sensitivity)
 

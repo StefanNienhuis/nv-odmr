@@ -59,6 +59,7 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
 
     fm_counts_per_modulation_freq.append(np.array(fm_counts))
 
+fm_counts_per_modulation_freq = np.array(fm_counts_per_modulation_freq)
 np.savez(f'../data/cw_fm_mod_sweep_std/{start_date.isoformat().replace(":", ".")}.npz', data=fm_counts_per_modulation_freq, params=params)
 
 std_per_modulation_freq = [np.std(counts, ddof=1) for counts in fm_counts_per_modulation_freq]
