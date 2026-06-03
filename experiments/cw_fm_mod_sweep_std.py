@@ -49,7 +49,7 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
     fm_counts = []
     
     for n in range(n_std):
-        freq, sweep_counts = cw_fm.perform_sweep(modulation_freq, freq_dev, meas_delay_ns, osc1, osc2, drive_freq, drive_freq, 1, n_meas)
+        freq, sweep_counts = cw_fm.perform_sweep(modulation_freq, freq_dev, meas_delay_ns, osc1, osc2, drive_freq, drive_freq, 1, n_meas, show_progress=False)
 
         # Taking sweep index 0 as only one frequency is used
         mean_low_counts = np.mean(sweep_counts[0, :, 0])

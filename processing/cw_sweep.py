@@ -4,17 +4,21 @@ from util.double_lorentzian_fit import fit_curve
 
 center_freq = 2.87e9
 
-start_freq      = 2.84e9
-stop_freq       = 2.90e9
-n_sweep         = 401
+results = np.load('../data/cw_sweep/2026-06-03T15.56.51.126233.npz', allow_pickle=True)
+
+counts = results['data']
+normalizer = np.max(counts)
+counts = counts / np.max(counts)
+
+params = results['params'].item()
+
+start_freq      = params['start_freq']
+stop_freq       = params['stop_freq']
+n_sweep         = params['n_sweep']
 
 freqs = np.linspace(start_freq, stop_freq, n_sweep)
 detuning = freqs - center_freq
-results = np.load('../data/cw_sweep/2026-05-26T14.25.58.871346.npz')
 
-counts = results['data']
-counts = counts / np.max(counts)
-print(counts)
 curve, params = fit_curve(detuning, counts)
 fit = curve(detuning, *params)
 
@@ -27,6 +31,11 @@ max_slope_detuning = detuning[np.argmax(np.abs(slope))]
 
 print(f"Max dip at {max_dip_detuning/1e9} MHz")
 print(f"Max slope at {max_slope_detuning/1e9} MHz")
+
+print()
+print(f"drive_freq = {center_freq + max_slope_detuning}")
+print(f"slope = {max_slope}")
+print(f"normalizer = {normalizer}")
 
 plt.plot(freqs, counts)
 plt.show()

@@ -12,10 +12,10 @@ osc2            = 1        # Second oscillator being swept
 start_freq      = 2.85e9   # Sweep start frequency (Hz)
 stop_freq       = 2.89e9   # Sweep stop frequency (Hz)
 mod_depth       = 3e6      # FM modulation depth (Hz)
-n_sweep         = 101      # Number of sweep steps
+n_sweep         = 201      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
 
-modulation_freqs = np.round(np.logspace(0, 5, 20))
+modulation_freqs = np.round(np.logspace(0, 5, 10))
 #modulation_freqs = np.round(np.logspace(1, 2, 2)).astype(int)
 
 freq_dev = mod_depth / 2
@@ -46,7 +46,7 @@ for i, modulation_freq in enumerate(modulation_freqs):
     if n_meas != round(n_meas):
         print(f"Warning: number of measurements is rounded: {n_meas} instead of {modulation_freq * meas_time}")
     
-    freq, sweep_counts = cw_fm.perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas)
+    freq, sweep_counts = cw_fm.perform_sweep(modulation_freq, freq_dev, meas_delay_ns, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas)
     
     low_counts = sweep_counts[:, :, 0]
     high_counts = sweep_counts[:, :, 1]

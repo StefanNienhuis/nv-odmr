@@ -51,7 +51,7 @@ laser.constant_current()
 laser.set_current(LASER_CURRENT)
 print(f"Laser mode: {laser.get_mode()}")
 
-def perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_sweep, n_meas):
+def perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_sweep, n_meas, show_progress=True):
     # Calculate pulse length from modulation frequency
     period_ns = 1e9 / modulation_freq
     pulse_length_ns = period_ns / 2
@@ -140,9 +140,10 @@ def perform_sweep(modulation_freq, meas_delay_ns, osc, start_freq, stop_freq, n_
 
     awg_channel.awg.enable_sequencer(single=True)
     
-    steps = n_sweep if n_sweep > 1 else n_meas
-    for _ in tqdm(range(steps)):
-        time.sleep(expected_duration / steps)
+    if show_progress:
+        steps = n_sweep if n_sweep > 1 else n_meas
+        for _ in tqdm(range(steps)):
+            time.sleep(expected_duration / steps)
     
     awg_channel.awg.wait_done(timeout=expected_duration*1.5)
 

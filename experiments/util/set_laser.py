@@ -15,7 +15,7 @@ laser = pycobolt.CoboltLaser(serialnumber=LASER_SN)
 
 
 laser.constant_current()
-laser.set_current(LASER_CURRENT)
+laser.set_current(0)
 
 # laser.constant_power()
 # laser.set_power(LASER_POWER)

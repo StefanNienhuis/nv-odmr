@@ -4,14 +4,12 @@ from util.double_lorentzian_fit import fit_curve
 
 center_freq = 2.8e9
 
-results = np.load('../persist/cw_am_mod_sweep/2026-05-12T13.02.38.492524.npz', allow_pickle=True)
+results = np.load('../data/cw_am_mod_sweep/2026-06-03T14.14.20.618777.npz', allow_pickle=True)
 counts = results['data']
-counts = [counts[2], counts[5], counts[11], counts[18]]
 
 params = results['params'].item()
 
 modulation_freqs = params['modulation_freqs']
-modulation_freqs = [modulation_freqs[2], modulation_freqs[5], modulation_freqs[11], modulation_freqs[18]]
 
 freqs = np.linspace(params['start_freq'], params['stop_freq'], params['n_sweep'])
 detuning = freqs - center_freq
@@ -44,8 +42,7 @@ for i, (modulation_freq, freq_counts) in enumerate(list(zip(modulation_freqs, co
     print(f"Max peak at {max_peak_detuning/1e6} MHz ({(center_freq + max_peak_detuning)/1e9} GHz)")
     print(f"Max slope at {max_slope_detuning/1e6} MHz ({(center_freq + max_slope_detuning)/1e9} GHz)")
 
-    plt.subplot(2, 2, i+1)
-    plt.tight_layout()
+    plt.subplot(2, 5, i+1)
     plt.title(f'{modulation_freq} Hz modulation')
     plt.plot(detuning / 1e6, am_counts, 'x', color='gray', label='Data')
     plt.plot(detuning / 1e6, fit, '--', color='red', label='Fit')
@@ -55,6 +52,7 @@ for i, (modulation_freq, freq_counts) in enumerate(list(zip(modulation_freqs, co
     # plt.ylim(-0.04, 0.14)
     # plt.xlabel('Detuning [MHz]')
 
+print()
 print(f"modulation_freqs = {list(modulation_freqs)}")
 print(f"drive_freqs = {max_slope_freqs}")
 print(f"slopes = {max_slopes}")

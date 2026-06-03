@@ -42,7 +42,7 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
     am_counts = []
     
     for n in range(n_std):
-        freq, sweep_am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, drive_freq, drive_freq, 1, n_meas)
+        freq, sweep_am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, drive_freq, drive_freq, 1, n_meas, show_progress=False)
 
         am_counts.append(sweep_am_counts[0])
 
