@@ -12,7 +12,7 @@ stop_freq       = 2.89e9   # Sweep stop frequency (Hz)
 n_sweep         = 101      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
 
-modulation_freqs = np.logspace(0, 5, 20)
+modulation_freqs = np.logspace(0, 5, 10)
 modulation_freqs = cw_am_bin.round_frequency(modulation_freqs)
 
 # Parameters stored in output file
