@@ -4,7 +4,7 @@ from util.double_lorentzian_fit import fit_curve
 
 center_freq = 2.8e9
 
-results = np.load('../data/cw_am_mod_sweep/2026-06-03T14.14.20.618777.npz', allow_pickle=True)
+results = np.load('../persist/cw_am_mod_sweep/2026-06-03T14.14.20.618777.npz', allow_pickle=True)
 am_counts_per_modulation_freq = results['data']
 
 params = results['params'].item()
