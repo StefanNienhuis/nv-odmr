@@ -33,7 +33,8 @@ configFreqSweep(OSC2, START_FREQ + FREQ_DEV, FREQ_INCR);
 
 var i;
 for (i = 0; i < N_SWEEP; i++) {
-    setSweepStep(OSC, i);
+    setSweepStep(OSC1, i);
+    setSweepStep(OSC2, i);
 
     resetOscPhase();
 

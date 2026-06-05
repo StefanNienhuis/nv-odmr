@@ -89,12 +89,13 @@ def lockin(sig, ref):
     phi_r = np.arctan2(Yr, Xr)
 
     d_phi = phi_s - phi_r
-    d_phi = d_phi % (2 * np.pi)
-    
-    print(phi_s, phi_r)
+    d_phi = d_phi % (np.pi)
 
     R = np.sqrt(Xs**2 + Ys**2)
     shift = d_phi / (2 * np.pi) * len(sig)
+    
+    
+    print(d_phi, shift)
 
     return R, shift
 
