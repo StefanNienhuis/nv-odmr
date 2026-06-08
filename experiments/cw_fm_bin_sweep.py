@@ -6,7 +6,7 @@ from util import cw_fm_bin, set_mw
 start_date = datetime.now()
 
 # Parameters
-modulation_freq = 100
+modulation_freq = 70
 modulation_freq = cw_fm_bin.round_frequency(modulation_freq)
 
 osc1            = 0        # First oscillator being swept
@@ -16,6 +16,9 @@ stop_freq       = 2.885e9   # Sweep stop frequency (Hz)
 mod_depth       = 3e6      # FM modulation depth (Hz)
 n_sweep         = 201      # Number of sweep steps
 meas_time       = 1        # Time to measure for at each frequency
+lock_in_mode    = 'corr'
+
+n_chunks        = 2         # Split run into n chunks, to avoid memory issues
 
 freq_dev = mod_depth / 2
 n_meas = int(round(meas_time * modulation_freq))
@@ -28,6 +31,7 @@ params = {
     "mod_depth": mod_depth,
     "n_sweep": n_sweep,
     "meas_time": meas_time,
+    "lock_in_mode": lock_in_mode
 }
 
 # Calculate pulse length from modulation frequency
@@ -40,14 +44,17 @@ print(f"Finished at: {(datetime.now() + timedelta(seconds=expected_duration)).ti
 
 # Split run so doesn't memory limit
 f = np.linspace(start_freq, stop_freq, n_sweep)
-f_a = f[0:len(f)//2]
-f_b = f[len(f)//2:]
+f_chunked = np.array_split(f, n_chunks)
 
-freq_a, fm_signals_a = cw_fm_bin.perform_sweep(modulation_freq, freq_dev, osc1, osc2, f_a[0], f_a[-1], len(f_a), n_meas)
-freq_b, fm_signals_b = cw_fm_bin.perform_sweep(modulation_freq, freq_dev, osc1, osc2, f_b[0], f_b[-1], len(f_b), n_meas)
+freq = np.array([])
+fm_signals = np.array([])
 
-freq = np.concatenate([freq_a, freq_b])
-fm_signals = np.concatenate([fm_signals_a, fm_signals_b])
+for i, f_chunk in enumerate(f_chunked):
+    print(f"[{i+1}/{n_chunks}] Sweeping {f_chunk[0]/1e9:.4f} - {f_chunk[-1]/1e9:.4f} GHz")
+    freq_chunk, fm_signals_chunk = cw_fm_bin.perform_sweep(modulation_freq, freq_dev, osc1, osc2, f_chunk[0], f_chunk[-1], len(f_chunk), n_meas, lock_in_mode=lock_in_mode)
+    
+    freq = np.concatenate([freq, freq_chunk])
+    fm_signals = np.concatenate([fm_signals, fm_signals_chunk])
 
 set_mw.set_steady()
 

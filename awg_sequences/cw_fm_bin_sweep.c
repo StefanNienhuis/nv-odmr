@@ -2,11 +2,10 @@
  * Performs a square wave AM modulated CW ODMR frequency sweep.
  * Includes marker for bins.
  *
- * Square AM modulation done by first sending a pulse identical to cw_sweep.c, but afterwards also sending a zero pulse
- * representing the 0 amplitude part of the modulation.
+ * Square FM modulation done by first sending a pulses identical to cw_sweep.c, but at two different frequencies.
  *
  * In contrast to cw_sweep.c, multiple measurements must be taken instead of a long pulse, as it should alternate
- * between sine/zero pulses.
+ * between the two frequency pulses.
  *
  * Required constants on Sequence property constants:
  *  - BIN_LENGTH    - number of samples per bin

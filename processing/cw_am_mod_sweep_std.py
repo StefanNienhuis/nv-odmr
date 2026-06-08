@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from util.sensitivity import calculate_sensitivity
 
-results = np.load('../persist/cw_am_mod_sweep_std/2026-06-03T14.49.18.962079.npz', allow_pickle=True)
+results = np.load('../persist/cw_am_bin_mod_sweep_std/2026-06-08T22.44.53.805395.npz', allow_pickle=True)
 counts_per_modulation_freq = results['data']
 
 params = results['params'].item()
@@ -16,13 +16,14 @@ gamma_nv = 28.0e9
 sensitivities_per_modulation_freq = []
 
 for freq, slope, counts in zip(modulation_freqs, slopes_per_freq, counts_per_modulation_freq):
+    counts = np.abs(counts)
     sensitivity = calculate_sensitivity(counts, slope, meas_time)
     print(f"{freq}:\t\t{sensitivity*1e6} uT/sqrt(Hz)")
     sensitivities_per_modulation_freq.append(sensitivity)
 
 print(np.std(counts_per_modulation_freq[3]))
 print(slopes_per_freq[3])
-plt.plot(counts_per_modulation_freq[3] - np.mean(counts_per_modulation_freq[3]))
+plt.plot(np.abs(counts_per_modulation_freq[3]))
 plt.show()
 
 plt.semilogx(modulation_freqs, np.array(sensitivities_per_modulation_freq) * 1e6)

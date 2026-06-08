@@ -4,7 +4,7 @@ from util.double_lorentzian_diff_fit import fit_curve
 
 center_freq = 2.87e9
 
-results = np.load('../data/cw_fm_bin_sweep/2026-06-05T08.43.59.519437.npz', allow_pickle=True)
+results = np.load('../data/cw_fm_bin_sweep/2026-06-05T10.59.42.656244.npz', allow_pickle=True)
 counts = results['data']
 params = results['params'].item()
 

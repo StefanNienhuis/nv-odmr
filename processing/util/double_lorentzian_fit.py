@@ -28,6 +28,6 @@ def fit_curve(freqs, fluorescence, dip=True):
 
     initial_guess = [b0_guess, b1_guess, A1_guess, A2_guess, x1_guess, x2_guess, gamma1_guess, gamma2_guess]
 
-    params, _ = curve_fit(curve, freqs, fluorescence, p0=initial_guess)
+    params, _ = curve_fit(curve, freqs, fluorescence, p0=initial_guess, maxfev = 18000)
 
     return curve, params

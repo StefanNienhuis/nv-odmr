@@ -32,8 +32,8 @@ def fit_curve(freqs, fluorescence, mod_depth, dip=True):
         high = cw_curve(x + mod_depth / 2, b0, b1, A1, A2, x1, x2, gamma1, gamma2)
         low = cw_curve(x - mod_depth / 2, b0, b1, A1, A2, x1, x2, gamma1, gamma2)
 
-        return (high - low) / (high + low)
+        return -(high - low) / (high + low)
 
-    params, _ = curve_fit(model, freqs, fluorescence, p0=initial_guess)
+    params, _ = curve_fit(model, freqs, fluorescence, p0=initial_guess, maxfev=18000)
 
     return model, params

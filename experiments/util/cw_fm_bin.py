@@ -6,6 +6,7 @@ from TimeTagger import createTimeTaggerNetwork, CountBetweenMarkers, CHANNEL_UNU
 import pycobolt
 from util.load_sequence import load_sequence
 from tqdm import tqdm
+from util.lock_in import lock_in, lock_in_corr
 
 bin_length = 1024
 
@@ -58,7 +59,8 @@ def round_frequency(frequency):
     pulse_ns = period_ns / 2
     pulse_length = pulse_ns * AWG_SAMPLE_RATE / 1e9
 
-    rounded_pulse_length = int(np.round(pulse_length / bin_length) * bin_length)
+    rounded_pulse_length = np.round(pulse_length / bin_length) * bin_length
+    rounded_pulse_length = rounded_pulse_length.astype(np.int64)
 
     rounded_pulse_ns = rounded_pulse_length * 1e9 / AWG_SAMPLE_RATE
     rounded_period_ns = rounded_pulse_ns * 2
@@ -66,40 +68,10 @@ def round_frequency(frequency):
 
     return rounded_frequency
 
-def lockin(sig, ref):
-    assert len(sig) == len(ref)
-
-    theta = np.linspace(0, 2 * np.pi, len(sig))
-
-    # Normalize signals
-    s = sig - np.mean(sig)
-    r = ref - np.mean(ref)
-
-    # Invert signal since MW high means PL low
-    s = -s
-
-    Xs = np.sum(s * np.cos(theta))
-    Ys = np.sum(s * np.sin(theta))
-
-    phi_s = np.arctan2(Ys, Xs)
-
-    Xr = np.sum(r * np.cos(theta))
-    Yr = np.sum(r * np.sin(theta))
-
-    phi_r = np.arctan2(Yr, Xr)
-
-    d_phi = phi_s - phi_r
-    d_phi = d_phi % (np.pi)
-
-    R = np.sqrt(Xs**2 + Ys**2)
-    shift = d_phi / (2 * np.pi) * len(sig)
+def perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas, lock_in_mode="default", show_progress=True):
+    n_sweep = int(n_sweep)
+    n_meas = int(n_meas)
     
-    
-    print(d_phi, shift)
-
-    return R, shift
-
-def perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas, show_progress=True):
     # Calculate pulse length from modulation frequency
     period_ns = 1e9 / modulation_freq
     pulse_length_ns = period_ns / 2
@@ -208,13 +180,19 @@ def perform_sweep(modulation_freq, freq_dev, osc1, osc2, start_freq, stop_freq, 
     counts = counts.reshape((n_sweep, n_meas, 2 * n_bins))
     
     ref = np.zeros(2 * n_bins)
-    ref[0:n_bins//2] = 1
+    ref[0:n_bins] = 1
     
     fm_signals = np.zeros(n_sweep)
     
     for i in range(n_sweep):
         summed_period = np.sum(counts[i], axis=0)
-        R, shift = lockin(summed_period, ref)
+        
+        if lock_in_mode == 'corr':
+            shift = lock_in_corr(summed_period, ref)
+        elif lock_in_mode == 'default':
+            shift = lock_in(summed_period, ref)
+        else:
+            raise Exception(f"Invalid lock_in_mode: {lock_in}")
         
         sig_unshifted = np.roll(counts[i], -round(shift))
 

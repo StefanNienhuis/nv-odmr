@@ -52,6 +52,9 @@ laser.set_current(LASER_CURRENT)
 print(f"Laser mode: {laser.get_mode()}")
 
 def perform_sweep(modulation_freq, freq_dev, meas_delay_ns, osc1, osc2, start_freq, stop_freq, n_sweep, n_meas, show_progress=True):
+    n_sweep = int(n_sweep)
+    n_meas = int(n_meas)
+    
     # Calculate pulse length from modulation frequency
     period_ns = 1e9 / modulation_freq
     pulse_length_ns = period_ns / 2

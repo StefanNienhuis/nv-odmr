@@ -4,7 +4,7 @@ from util.double_lorentzian_fit import fit_curve
 
 center_freq = 2.8e9
 
-results = np.load('../persist/cw_am_mod_sweep/2026-06-03T14.14.20.618777.npz', allow_pickle=True)
+results = np.load('../persist/cw_am_bin_mod_sweep/2026-06-08T21.29.01.286022.npz', allow_pickle=True)
 am_counts_per_modulation_freq = results['data']
 
 params = results['params'].item()
@@ -18,6 +18,8 @@ max_slopes = []
 max_slope_freqs = []
 
 for i, (modulation_freq, am_counts) in enumerate(list(zip(modulation_freqs, am_counts_per_modulation_freq))):
+    am_counts = np.abs(am_counts)
+    
     curve, params = fit_curve(detuning, am_counts, dip=False)
     fit = curve(detuning, *params)
 

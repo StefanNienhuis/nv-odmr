@@ -10,18 +10,18 @@ start_date = datetime.now()
 osc             = 0        # Oscillator being swept
 meas_time       = 1        # Time to measure for at each frequency
 n_std           = 50
+lock_in_mode    = 'corr'
 
 # Obtain from cw_am_bin_mod_sweep - find maximum slope frequency for each modulation frequency
-modulation_freqs = [1.0, 2.0, 3.0, 6.0, 11.0, 21.0, 38.0, 70.0, 127.0, 234.0, 428.0, 785.0, 1438.0, 2637.0, 4833.0, 8859.0, 16238.0, 29764.0, 54556.0, 100000.0]
-drive_freqs = [2865600000.0, 2874400000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2865600000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866000000.0, 2866400000.0, 2874000000.0, 2866000000.0, 2866400000.0, 2868000000.0]
-slopes = [1.97335326469559e-08, 4.4853112745912805e-08, 2.3311749527669316e-08, 2.38000646019405e-08, 2.205877108814881e-08, 2.18016007880072e-08, 2.0799809894860057e-08, 2.2318638692230916e-08, 2.072805698337305e-08, 2.10708404571209e-08, 1.9010174853594503e-08, 1.808603212144027e-08, 1.654849468248466e-08, 1.5097324308013797e-08, 1.2452869870625879e-08, 1.0432453893594902e-08, 9.009540181040789e-09, 5.525078576855236e-09, 3.957393777901247e-09, 7.085585810659469e-09]
-
-# Parameters stored in output file
+modulation_freqs = [1.0000005120002622, 3.5938178512810324, 12.915443315875788, 46.41677361091307, 166.81969593440382, 599.4858809085329, 2155.7671081677704, 7750.496031746032, 27901.785714285714, 97656.25]
+drive_freqs = [2867450000.0, 2867300000.0, 2867300000.0, 2874200000.0, 2874500000.0, 2874650000.0, 2874650000.0, 2867600000.0, 2867600000.0, 2867750000.0]
+slopes = [4.021967680045762e-08, 3.6766592210885816e-08, 3.6220753811134534e-08, 1.947143100611379e-08, 3.2508174854627886e-08, 3.1279098163388185e-08, 2.702608255070423e-08, 2.1066131393939318e-08, 1.315323917244926e-08, 4.099103631904031e-09]
 params = {
     "modulation_freqs": modulation_freqs,
     "drive_freqs": drive_freqs,
     "meas_time": meas_time,
-    "slopes": slopes # included for further processing
+    "slopes": slopes, # included for further processing
+    'lock_in_mode': lock_in_mode
 }
 
 expected_duration = n_std * meas_time * len(modulation_freqs)
@@ -42,7 +42,7 @@ for i, (modulation_freq, drive_freq) in enumerate(zip(modulation_freqs, drive_fr
     am_counts = []
     
     for n in range(n_std):
-        freq, sweep_am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, drive_freq, drive_freq, 1, n_meas, show_progress=False)
+        freq, sweep_am_counts = cw_am_bin.perform_sweep(modulation_freq, osc, drive_freq, drive_freq, 1, n_meas, show_progress=False, lock_in_mode=lock_in_mode)
 
         am_counts.append(sweep_am_counts[0])
 

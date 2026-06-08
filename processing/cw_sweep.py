@@ -22,6 +22,10 @@ detuning = freqs - center_freq
 curve, params = fit_curve(detuning, counts)
 fit = curve(detuning, *params)
 
+[b0, b1, A1, A2, x1, x2, gamma1, gamma2] = params
+print("A:", A1, A2)
+print("gamma: ", gamma1, gamma2)
+
 max_dip = np.min(fit)
 max_dip_detuning = detuning[np.argmin(np.abs(fit))]
 

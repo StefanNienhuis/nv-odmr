@@ -7,7 +7,7 @@ N = 3
 
 t = np.arange(T * N)
 
-shift = int(np.round((np.random.random() * T/4) + T/8))
+shift = T - int(np.round((np.random.random() * T/4) + T/8))
 
 ref = np.zeros(T)
 ref[:T//2] = 1
@@ -18,13 +18,14 @@ sig = 1 - (np.roll(sig_base, shift) * 0.15) + (np.random.randn(len(sig_base)) * 
 
 sig = np.reshape(sig, (N, T))
 
+print(f"True shift: {shift}")
+
 def corr_lockin(sig, ref):
+    sig_norm = sig - np.mean(sig)
+    ref_norm = ref - np.mean(ref)
 
-    sig_padded = np.pad(-sig, (0,len(ref)-1))
-    ref_padded = np.pad(ref, (0, len(sig)-1))
-
-    sig_padded = sig_padded - np.mean(sig_padded)
-    ref_padded = ref_padded - np.mean(ref_padded)
+    sig_padded = np.pad(-sig_norm, (0,len(ref_norm)-1))
+    ref_padded = np.pad(ref_norm, (0, len(sig_norm)-1))
 
     S = np.fft.fft(sig_padded)
     R = np.fft.fft(ref_padded)
@@ -33,17 +34,18 @@ def corr_lockin(sig, ref):
     Rsigref = np.real(np.fft.ifft(R_f))
 
 
-    # plt.plot(np.arange(len(Rsigref)),Rsigref)
-    # plt.xlim(0, len(sig)//2)
-    # plt.show()
+    plt.plot(np.arange(len(Rsigref)),Rsigref)
+    plt.xlim(0, len(sig))
+    plt.show()
 
-    shift = np.argmax(Rsigref[0:len(sig)//2])
+    shift = np.argmax(Rsigref[0:len(sig)])
 
     return shift
 
 sig_summed = np.sum(sig, axis=0)
 det_shift = corr_lockin(sig_summed, ref)
 print(shift, det_shift)
+
 
 sig_unshifted = np.roll(sig, -round(shift), axis=1)
 
