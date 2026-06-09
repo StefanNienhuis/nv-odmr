@@ -52,7 +52,7 @@ sig_summed = np.sum(sig, axis=0)
 R, det_shift = lockin(sig_summed, ref)
 print(R, shift, det_shift)
 
-sig_unshifted = np.roll(sig, -round(shift), axis=1)
+sig_unshifted = np.roll(sig, -round(det_shift), axis=1)
 
 active_counts = np.sum(sig_unshifted[:, :T//2], axis=1)
 inactive_counts = np.sum(sig_unshifted[:, T//2:], axis=1)
