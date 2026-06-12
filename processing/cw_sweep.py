@@ -4,7 +4,7 @@ from util.double_lorentzian_fit import fit_curve
 
 center_freq = 2.87e9
 
-results = np.load('../data/cw_sweep/2026-06-03T15.56.51.126233.npz', allow_pickle=True)
+results = np.load('../persist/cw_sweep/2026-06-03T15.56.51.126233.npz', allow_pickle=True)
 
 counts = results['data']
 normalizer = np.max(counts)

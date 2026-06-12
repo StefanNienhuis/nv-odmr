@@ -36,8 +36,8 @@ if __name__ == '__main__':
     # Plot
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.suptitle(f"Simulated AM CW-ODMR frequency sweep (B = {Bz * 1e6} $\\mu$T)")
-    fig.set_figwidth(10.8)
-    fig.set_figheight(4.8)
+    fig.set_figwidth(9)
+    fig.set_figheight(3.5)
     # plt.figure(figsize=(10.8, 4.8))
 
     ax1.plot(freqs / 1e9, on_results, label="MW on")

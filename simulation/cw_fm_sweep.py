@@ -32,15 +32,15 @@ fm_results = b_results - a_results
 
 detunings = freqs - 2.87e9
 
-curve, params = double_lorentzian_diff_fit.fit_curve(detunings, fm_results, mod_depth=mod_depth, dip=False)
+curve, params = double_lorentzian_diff_fit.fit_curve(detunings, -fm_results, mod_depth=mod_depth, dip=False)
 fit = curve(detunings, *params)
 
 if __name__ == '__main__':
     # Plot
-    plt.figure()
+    plt.figure(figsize=(5, 3.5))
     plt.plot(detunings / 1e6, fm_results, marker="o", ls="none", ms=3.2,
                 mfc="none", mec="0.35", mew=0.8, label="Data")
-    plt.plot(detunings / 1e6, fit, color="C3", lw=1.4, label="Lorentzian difference fit")
+    plt.plot(detunings / 1e6, -fit, color="C3", lw=1.4, label="Lorentzian difference fit")
     plt.xlabel("Detuning $\\delta = f - D$ (MHz)")
     plt.ylabel("FM signal (a.u.)")
     plt.suptitle(f"Simulated FM CW-ODMR frequency sweep (B = {Bz*1e6} $\\mu$T)")

@@ -27,7 +27,7 @@ fit = curve(detunings, *params)
 
 if __name__ == '__main__':
     # Plot
-    plt.figure()
+    plt.figure(figsize=(5, 3.5))
     plt.plot(detunings / 1e6, fluorescence_results, marker="o", ls="none", ms=3.2,
                 mfc="none", mec="0.35", mew=0.8, label="Data")
     plt.plot(detunings / 1e6, fit, color="C3", lw=1.4, label="Lorentzian fit")
